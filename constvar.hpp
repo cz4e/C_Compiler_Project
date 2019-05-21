@@ -1,0 +1,224 @@
+#ifndef _CONSTVAR_H
+#define _CONSTVAR_H
+#endif
+
+#include <map>
+#include <string>
+#include <vector>
+#include <fstream>
+//#define TOKENANALYZER            1
+//#define syntaxanalyzer           2
+#define DEBUG                    3
+//#define StartSyntaxAnalysis      4
+//#define StartTokenAnalysis       5
+//#define preprocessor             6
+#define StartPreProcess          7
+
+#define SYN_AUTO			0 // auto
+#define SYN_BREAK			1 //break
+#define SYN_CASE			2 //case
+#define SYN_CHAR            3 //char
+#define SYN_CONST			4 //const
+#define SYN_CONTINUE		5 //continue
+#define SYN_DEFAULT			6 //default
+#define SYN_DO				7 //do
+#define SYN_WHILE			8 //while
+#define SYN_FOR				9 //for
+#define SYN_SWITCH			10 //switch
+#define SYN_ELSE			11 //else
+#define SYN_ENUM			12 //enum
+#define SYN_EXTERN			13 //extern
+#define SYN_GOTO			14 //goto
+#define SYN_IF				15 //if
+#define SYN_REGISTER		16 //register
+#define SYN_RETURN			17 //return
+#define SYN_SIZEOF			18 //sizeof
+#define SYN_STATIC			19 //static
+#define SYN_STRUCT			20 //struct
+#define SYN_TYPEDEF			21 //typedef
+#define SYN_UNION			22 //union
+#define SYN_VOLATILE		23 //volatile
+#define SYN_VOID			24 //void
+#define SYN_TRUE			25 //TRUE
+#define SYN_FALSE			26 //FALSE
+#define SYN_FLOAT			27 //flaot
+#define SYN_DOUBLE			29 //double
+#define SYN_INT				30 //int
+#define SYN_LONG			31 //long
+#define SYN_SIGNED			32 //signed
+#define SYN_UNSIGNED        107// unsigned
+#define SYN_SHORT			33 //short
+#define SYN_BOOL			87 //bool
+#define SYN_MACRO_IF		34 //#if
+#define SYN_MACRO_IFNDEF	35 //#ifndef
+#define SYN_MACRO_ELIF		36 //#elif
+#define SYN_MACRO_ENDIF		37 //#endif
+#define SYN_MACRO_ELSE		38 //#else
+#define SYN_MACRO_INCLUDE	39 //#include
+#define SYN_MACRO_DEFINE	40 //#define
+#define SYN_MACRO_UNDEF		41 //#undef
+#define SYN_MACRO_IFDEF     106// #ifdef
+#define SYN_LINE			42 //#line
+#define SYN_ERROR			43 //#error
+#define SYN_PRAGMA			44 //pragma
+#define SYN_PAREN_L			45 //(
+#define SYN_PAREN_R			46 //)
+#define SYN_BRACE_L			47 //{
+#define SYN_BRACE_R			48 //}
+#define SYN_SQU_BRACE_L		49 //[
+#define SYN_SQU_BRACE_R		50//]
+#define SYN_LT				51 //<
+#define SYN_GT				52 //>
+#define SYN_LE				53 //<=
+#define SYN_GE				54//>=
+#define SYN_EQ				55//==
+#define SYN_ADD				56 //+
+#define SYN_SUB				57  //-
+#define SYN_MOD				58 //%
+#define SYN_MODEQ			59//%=
+#define SYN_AE				60 //+=
+#define SYN_SE				61//-=
+#define SYN_ME				62 //*=
+#define SYN_DE				63 ///=
+#define SYN_INC				64//++
+#define SYN_DEC				65//--
+#define SYN_POINTER			66//->
+#define SYN_NOTEQ			67//!=
+#define SYN_CHOOSE			68//?
+#define SYN_AND				69 //&&
+#define SYN_OR				70 //||
+#define SYN_NOT				71 //!
+#define SYN_SET				72 //=
+#define SYN_MUL				73 //*
+#define SYN_DIV				74 ///
+#define SYN_COMMA			75 //,
+#define SYN_SEMIC			76 //;
+#define SYN_BIT_XOREQ		77//^=
+#define SYN_BIT_OR			78 //|
+#define SYN_BIT_NOT			79//~
+#define SYN_BIT_AND			80//&
+#define SYN_BIT_XOR			81//^
+#define SYN_BIT_ANDEQ		82//&=
+#define SYN_BIT_SHL			83 //<<
+#define SYN_BIT_SHLEQ		84 //<<=
+#define SYN_BIT_SHREQ		85 // >>=
+#define SYN_BIT_SHR			86 //>>
+#define SYN_BIT_NOTEQ       87//~=
+#define SYN_BIT_OREQ        89//|=
+#define SYN_DOT             90 //.
+#define SYN_POST            91 //##
+#define SYN_SHARP           92 //#
+#define SYN_COLON           93 //:
+#define SYN_TRIDOTS         94 //...
+#define SYN_QUES            95 //?
+#define SYN_DOTMUL          96 //.*
+#define SYN_KEYWORD         98 //keyword
+#define SYN_NUMBER          99 // number
+#define SYN_SCOPE           100//::
+#define SYN_POINTERMUL      102 //->*
+#define SYN_STRING          103 //string
+#define SYN_NUMBER_LONG     104
+#define SYN_NUMBER_DOUBLE   105
+#define SYN_TEXT            111
+#define SYN_TYPEDEFNAME     108
+#define SYN_FUNCTION        109 //函数
+#define SYN_TYPENAME        110
+#define SYN_NULL            111
+// ID STATE
+#define ID_FUN				1
+#define ID_CHAR				2
+#define ID_SHORT			4
+#define ID_SIGNEDINT        5
+#define ID_UNSIGNEDINT      6
+#define ID_INT				7
+#define ID_FLOAT			8
+#define ID_DOUBLE			9
+#define ID_SIGNED			10
+#define ID_POINTER			11
+#define ID_SIGNEDLONG       12
+#define ID_LONG				13
+#define ID_UNSIGNEDLONG     14
+#define ID_BOOLEN			15
+#define ID_SELFDEFINE       16
+
+
+// DEFINE STATE
+#define ERROR               -1
+
+std::map<std::string,int> KeyWordMap={
+    {"auto",SYN_AUTO},          {"break",SYN_BREAK},          {"case",SYN_CASE},        {"const",SYN_CONST},    {"char",SYN_CHAR},
+    {"continue",SYN_CONTINUE},  {"default",SYN_DEFAULT},      {"do",SYN_DO},            {"while",SYN_WHILE},    {"for",SYN_FOR},      
+    {"switch",SYN_SWITCH},      {"else",SYN_ELSE},            {"enum",SYN_ENUM},        {"extern",SYN_EXTERN},  {"goto",SYN_GOTO},    
+    {"if",SYN_IF},              {"register",SYN_REGISTER},    {"return",SYN_RETURN},    {"sizeof",SYN_SIZEOF},  {"static",SYN_STATIC},  
+    {"struct",SYN_STRUCT},      {"typedef",SYN_TYPEDEF},      {"union",SYN_UNION},      {"volatile",SYN_VOLATILE},{"void",SYN_VOID},    
+    {"true",SYN_TRUE},          {"false",SYN_FALSE},          {"float",SYN_FLOAT},      {"double",SYN_DOUBLE},  {"int",SYN_INT},     
+    {"long",SYN_LONG},          {"signed",SYN_SIGNED},  {"unsigned",SYN_UNSIGNED},      {"short",SYN_SHORT},      {"bool",SYN_BOOL},      {"#if",SYN_MACRO_IF},     
+    {"#ifndef",SYN_MACRO_IFNDEF},     {"#elif",SYN_MACRO_ELIF},   {"#else",SYN_MACRO_ELSE},   {"#include",SYN_MACRO_INCLUDE},{"#endif",SYN_MACRO_ENDIF},
+    {"#define",SYN_MACRO_DEFINE}, {"#undef",SYN_MACRO_UNDEF}, {"#line",SYN_LINE},{"#ifdef",SYN_MACRO_IFDEF } ,      {"#error",SYN_ERROR},   {"#pragma",SYN_PRAGMA},
+    {"<",SYN_LT},{">",SYN_GT},{"<=",SYN_LE},{">=",SYN_GE},{"==",SYN_EQ},{"+",SYN_ADD},{"-",SYN_SUB},{"(",SYN_PAREN_L},{")",SYN_PAREN_R},
+    {"[",SYN_SQU_BRACE_L},{"]",SYN_SQU_BRACE_R},{"{",SYN_BRACE_L},{"}",SYN_BRACE_R},{"%",SYN_MOD},{"%=",SYN_MODEQ},{"+=",SYN_AE},{"-=",SYN_SE},{"*=",SYN_ME},
+    {"/=",SYN_DE},{"++",SYN_INC},{"--",SYN_DEC},{"->",SYN_POINTER},{"!=",SYN_NOTEQ},{"?",SYN_QUES},{"&&",SYN_AND},{"||",SYN_OR},{"!",SYN_NOT},{"=",SYN_SET},
+    {"/",SYN_DIV},{",",SYN_COMMA},{";",SYN_SEMIC},{"^=",SYN_BIT_XOREQ},{"|",SYN_BIT_OR},{"~",SYN_BIT_NOT},{"&",SYN_BIT_AND},{"^",SYN_BIT_XOR},{"&=",SYN_BIT_ANDEQ},
+    {"<<",SYN_BIT_SHL},{"<<=",SYN_BIT_SHLEQ},{">>",SYN_BIT_SHR},{">>=",SYN_BIT_SHREQ},{"|=",SYN_BIT_OREQ},{".",SYN_DOT},{"##",SYN_POST},{"#",SYN_SHARP},{":",SYN_COLON},
+    {"...",SYN_TRIDOTS},{"::",SYN_SCOPE},
+    };
+
+
+union IntgerNumber{
+    short ShortNumber;
+    signed SignedShortNumber;
+    unsigned short UnSignedShortNumber;
+
+    int   IntNumber;
+    signed int SignedIntShortNumber;
+    unsigned int UnSignedIntNumber;
+
+    long  LongNumber;
+    signed long SignedLongNumber;
+    unsigned long UnSignedLongNumber;
+};
+
+union FloatPointNumber{
+    float FloatNumber;
+    double DoubleNumber;
+    long double LongDoubleNumber;
+};
+
+union RealNumber{
+    union IntgerNumber intgerNumber;
+    union FloatPointNumber floatNumber;
+    
+};
+
+union Number{
+    union RealNumber realNumber;
+};
+
+struct TokenValue{
+    std::string StringValue;
+    union Number number;
+};
+
+struct TOKEN{
+    int TokenType;
+    struct TokenValue tokenValue;
+};
+
+
+unsigned int LineNumber = 1;
+
+std::string text;
+std::string PreProcesstext;
+bool SwitchForMacro = false;
+
+std::map<std::string,bool> IncludeFile;
+
+struct textPart{
+    int MacroType;  // 1 general ,2 macro function
+    std::vector<std::string> arguments;
+    std::string textpart;
+};
+
+std::map<std::string, struct textPart> MacroValue;
+std::ofstream midfile;
+std::string text1;
