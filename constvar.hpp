@@ -8,11 +8,11 @@
 #include <fstream>
 //#define TOKENANALYZER            1
 //#define syntaxanalyzer           2
-#define DEBUG                    3
+#define DEBUG                      3
 //#define StartSyntaxAnalysis      4
 //#define StartTokenAnalysis       5
 //#define preprocessor             6
-#define StartPreProcess          7
+#define StartPreProcess            7
 
 #define SYN_AUTO			0 // auto
 #define SYN_BREAK			1 //break
