@@ -8,11 +8,11 @@
 #include <fstream>
 //#define TOKENANALYZER            1
 //#define syntaxanalyzer           2
-#define DEBUG                      3
-//#define StartSyntaxAnalysis      4
+#define DEBUG                    3
+#define StartSyntaxAnalysis      4
 //#define StartTokenAnalysis       5
 //#define preprocessor             6
-#define StartPreProcess            7
+//#define StartPreProcess          7
 
 #define SYN_AUTO			0 // auto
 #define SYN_BREAK			1 //break
@@ -142,6 +142,28 @@
 #define ID_SELFDEFINE       16
 
 
+#define char_mask       0x1
+#define short_mask      0x2
+#define int_mask        0x4
+#define long_mask       0x8
+#define double_mask     0x10
+#define string_mask     0x20
+#define signed_mask     0x40
+#define unsigned_mask   0x80
+#define struct_mask     0x100
+#define union_mask      0x200
+#define enum_mask       0x400
+#define seldefine_mask  0x800
+#define pointer_mask    0x1000
+#define float_mask      0x2000
+#define array_mask      0x4000
+
+#define STATIC          1
+#define AUTO            2
+#define REGISTER        3
+#define EXTERN          4
+#define TYPEDEF         5
+
 // DEFINE STATE
 #define ERROR               -1
 
@@ -166,15 +188,12 @@ std::map<std::string,int> KeyWordMap={
 
 union IntgerNumber{
     short ShortNumber;
-    signed SignedShortNumber;
     unsigned short UnSignedShortNumber;
 
     int   IntNumber;
-    signed int SignedIntShortNumber;
     unsigned int UnSignedIntNumber;
 
     long  LongNumber;
-    signed long SignedLongNumber;
     unsigned long UnSignedLongNumber;
 };
 
@@ -194,9 +213,16 @@ union Number{
     union RealNumber realNumber;
 };
 
+struct ArrayInfo{
+    int Dimension;
+    std::vector<int> dims;
+};
+
 struct TokenValue{
     std::string StringValue;
     union Number number;
+    int value_address;
+    struct ArrayInfo arrayinfo;
 };
 
 struct TOKEN{
@@ -222,3 +248,46 @@ struct textPart{
 std::map<std::string, struct textPart> MacroValue;
 std::ofstream midfile;
 std::string text1;
+
+
+struct ValueInfo{
+    int value_type;  /* 1 integer,2 float point number,3 charactor, 4 string,5 short, 6 signed,7 unsigned, 8 struct,9 struct ,
+    10 enum, -1 selfdefined*/
+    int limit_type; /* 0 NONE,1 const,2 volaltile*/
+    int store_type; /* 0 NONE,1 static,2 auto,3 register,4 extern,5 typedef*/
+    std::string value_name;
+    struct TokenValue value;
+};
+
+
+
+struct ValueAliasName{
+    int store_type;
+    int limit_type; /* 0 NONE, 1 const,2 volatile */
+    int value_type;
+    std::string alias;
+};
+
+struct FunctionInfo{
+    std::string function_name;
+  //  std::vector<struct ArgumentsType> args_type;
+    int     return_type;
+};
+
+
+std::vector<struct ValueInfo> GlobalValue;
+struct ValueInfo valueinfo;
+struct ValueAliasName aliasname;
+
+int store_type = 0,limit_type = 0,statement_type;
+std::string id_name = "",function_name = "";
+std::vector<struct TokenValue> struct_info;
+struct TokenValue id_primary;
+
+std::vector<struct ValueAliasName> ValueAlais;
+std::vector<struct FunctionInfo> FuncInfo;
+
+bool GlobalScopeValue = true;
+bool InStruct = false;
+bool InPreProcess = true;
+

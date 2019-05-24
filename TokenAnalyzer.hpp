@@ -1026,7 +1026,7 @@ int TokenAnalyzer::Processor(void){
         return ERROR;
 }
 void TokenAnalyzer::ChangeStringToNumber(TOKEN &token){
-    if(token.tokenValue.StringValue.find('.') != std::string::npos){
+    if(TokenString.find('.') != std::string::npos){
         token.tokenValue.number.realNumber.floatNumber.DoubleNumber = String2Double();
         token.TokenType = SYN_NUMBER_DOUBLE;
     }
