@@ -10,14 +10,38 @@
                                                 while(isType(CurrentTokenType))\
                                                     Type();\
                                                 if(type == SYN_STRUCT || type == SYN_UNION){\
+                                                    if(type == SYN_STRUCT){\
+                                                        struct_or_union = 1;\
+                                                    }\
+                                                    else{\
+                                                        struct_or_union = 2;\
+                                                    }\
                                                     StructOrUnion();\
                                                     break;\
+                                                }\
+                                                else if(type == SYN_ENUM){\
+                                                    if(CurrentTokenType == SYN_BRACE_L){\
+                                                        Match(SYN_BRACE_L);\
+                                                        EnumList();\
+                                                        Match(SYN_BRACE_R);\
+                                                        if(CurrentTokenType == SYN_KEYWORD){\
+                                                            struct_name = getTokenString();\
+                                                            Match(SYN_KEYWORD);\
+                                                            BuildSymbolTable();\
+                                                            ResetAlias();\
+                                                        }\
+                                                        Match(SYN_SEMIC);\
+                                                    }\
                                                 }\
                                                 if(CurrentTokenType == SYN_KEYWORD){\
                                                     StatementID();\
                                                 }\
                                                 else if(CurrentTokenType == SYN_FUNCTION){\
+                                                    func_info.return_type = statement_type;\
+                                                    statement_type = 0;\
                                                     StatementFunction();\
+                                                    FuncInfo.push_back(func_info);\
+                                                    ResetFuncDefine();\
                                                     return;\
                                                 }\
                                             }while(0);
@@ -28,6 +52,43 @@
                                 }while(0);
 
 std::string alias_name;
+int struct_or_union;
+static void ResetGlobalvalue(void){
+    store_type = 0;
+    limit_type = 0;
+    statement_type = 0;
+    struct_name = "";
+    id_name = "";
+    function_name = "";
+    id_primary.arrayinfo.Dimension = 0;
+    id_primary.arrayinfo.dims.erase(id_primary.arrayinfo.dims.cbegin(),id_primary.arrayinfo.dims.cend());
+    id_primary.StringValue = "";
+    id_primary.number.realNumber.floatNumber.DoubleNumber = 0;
+    id_primary.number.realNumber.intgerNumber.LongNumber = 0;
+    struct_info.erase(struct_info.cbegin(),struct_info.cend());
+    struct_body.erase(struct_body.cbegin(),struct_body.cend());
+
+    valueinfo.value.arrayinfo.Dimension = 0;
+    valueinfo.value.arrayinfo.dims.erase(valueinfo.value.arrayinfo.dims.cbegin(),valueinfo.value.arrayinfo.dims.cend());
+    valueinfo.value.StringValue = "";
+    valueinfo.value.number.realNumber.floatNumber.DoubleNumber = 0;
+    valueinfo.value.number.realNumber.intgerNumber.LongNumber = 0;
+    valueinfo.block_value.erase(valueinfo.block_value.cbegin(),valueinfo.block_value.cend());
+    valueinfo.struct_body.erase(valueinfo.struct_body.cbegin(),valueinfo.struct_body.cend());
+}
+
+static void ResetAlias(void){
+    alias_name = "";
+    ResetGlobalvalue();
+    return;
+}
+
+static void ResetFuncDefine(void){
+    func_info.function_name = "";
+    func_info.args_type.erase(func_info.args_type.cbegin(),func_info.args_type.cend());
+    func_info.return_type = 0;
+}
+
 class SyntaxAnalyzer{
 public:
     SyntaxAnalyzer();
@@ -97,6 +158,7 @@ public:
     void StatementFunction(void);
     void StatementID(void);
     void StructOrUnion(void);
+    void EnumList(void);
     void BuildSymbolTable(void);
     inline bool isEOF(void);                        // 判断函数
     void Match(int type);                           // 获取函数
@@ -217,25 +279,30 @@ void SyntaxAnalyzer::BuildAST(void){
 }
 
 void SyntaxAnalyzer::StructOrUnion(void){
-    int type = CurrentTokenType;
+
     if(CurrentTokenType == SYN_KEYWORD){
-        id_name = getTokenString();
+        struct_name = getTokenString();
         Match(SYN_KEYWORD);
     }
     if(CurrentTokenType == SYN_BRACE_L){
         Match(SYN_BRACE_L);
-        if(type == SYN_STRUCT)
+        if(struct_or_union == 1)
             StructList();
         else
             UnionList();
         Match(SYN_BRACE_R);
     }
-    if(CurrentTokenType == SYN_KEYWORD)
+
+    if(CurrentTokenType == SYN_KEYWORD){
+       id_name = getTokenString();
         Match(SYN_KEYWORD);
+    }
     if(CurrentTokenType == SYN_SET){
         Match(SYN_SET);
         Primary(CurrentTokenType);
     }
+    BuildSymbolTable();
+    ResetAlias();
     return;
 }
 
@@ -250,6 +317,7 @@ void SyntaxAnalyzer::StatementID(void){
         Primary(CurrentTokenType);
         IdList();
         Match(SYN_SEMIC);
+        
     }
     else if(CurrentTokenType == SYN_COLON){
 #if defined(syntaxanalyzer)
@@ -257,6 +325,7 @@ void SyntaxAnalyzer::StatementID(void){
 #endif
         Match(SYN_COLON);
         ConstExpress();
+        IdList();
         Match(SYN_SEMIC);
     }
     else if(CurrentTokenType == SYN_SQU_BRACE_L){
@@ -272,6 +341,10 @@ void SyntaxAnalyzer::StatementID(void){
         if(CurrentTokenType == SYN_SET){
             Match(SYN_SET);
             Primary(CurrentTokenType);
+            if(!StructDefineList){
+                BuildSymbolTable();
+                ResetAlias();
+            }
         }
         Match(SYN_SEMIC);
     }
@@ -286,12 +359,13 @@ void SyntaxAnalyzer::StatementFunction(void){
 #if defined(syntaxanalyzer)
     std::cout << "StatementFunction-> function(ArgumentList)(;|{Statement}) " << std::endl;
 #endif
+    func_info.function_name = getTokenString();
     Match(SYN_FUNCTION);
     Match(SYN_PAREN_L);
     ArgumentList();
     Match(SYN_PAREN_R);
     if(CurrentTokenType == SYN_SEMIC){
-        return; //Match(SYN_SEMIC);
+        Match(SYN_SEMIC);
     }
     else if(CurrentTokenType == SYN_BRACE_L){
         CompoundSentence();
@@ -351,7 +425,7 @@ void SyntaxAnalyzer::Statement(void){
 
     if(isStoreTypeSymbol(CurrentTokenType)){
 #if defined(syntaxanalyzer)
-    std::cout << "Statement-> [StoreTypeSymbol] [ LimitTypeSymbol ] Type  process_id_or_function_statement;" << token.tokenValue.StringValue << std::endl;
+    std::cout << "Statement-> StoreTypeSymbol [ LimitTypeSymbol ] Type  process_id_or_function_statement;" << token.tokenValue.StringValue << std::endl;
 #endif
         StoreTypeSymbol();
         if(isLimitTypeSymbol(CurrentTokenType)){
@@ -618,15 +692,17 @@ void SyntaxAnalyzer::Type(void){
         Pointer();
     }
     else if(CurrentTokenType == SYN_KEYWORD){
-        
-        alias_name = getTokenString();
-        if(getAlias(alias_name) != ValueAlais.cend()){
-            statement_type |= seldefine_mask;
-            Match(SYN_KEYWORD);
+        if(!(statement_type & (struct_mask | union_mask)) && !StructDefineList){
+            alias_name = getTokenString();
+            if(getAlias(alias_name) != ValueAlais.cend()){
+                statement_type |= seldefine_mask;
+                Match(SYN_KEYWORD);
+            }
         }
     }
     return;
 }
+
 
 void SyntaxAnalyzer::Primary(int tokenvalue){
     switch(tokenvalue){
@@ -634,6 +710,7 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> double_num "<< token.tokenValue.StringValue << std::endl;
 #endif
+            statement_type |= double_mask;
             id_primary.number.realNumber.floatNumber.DoubleNumber = token.tokenValue.number.realNumber.floatNumber.DoubleNumber;
             Match(SYN_NUMBER_DOUBLE);
             return;
@@ -641,13 +718,16 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> long_num " << token.tokenValue.StringValue << " " << token.TokenType << std::endl;
 #endif
+            statement_type |= long_mask;
             id_primary.number.realNumber.intgerNumber.LongNumber = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
             Match(SYN_NUMBER_LONG);
             return;
         case SYN_STRING:
 #if defined(syntaxanalyzer)
-    std::cout << "Primary-> "<< token.tokenValue.StringValue  << std::endl;
+    std::cout << "Primary-> string"<< token.tokenValue.StringValue  << std::endl;
 #endif
+            statement_type |= string_mask;
+            ReadOnlyData.push_back(getTokenString());
             id_primary.StringValue = token.tokenValue.StringValue;
             Match(SYN_STRING);
             return;
@@ -657,6 +737,15 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
 #endif
             CopyToNewId(getTokenString(),id_primary);
             Match(SYN_KEYWORD);
+            return;
+        case SYN_FUNCTION:
+            Match(SYN_FUNCTION);
+            Match(SYN_PAREN_L);
+            Args();
+            Match(SYN_PAREN_R);
+            /*if(CurrentTokenType == SYN_SEMIC){
+                Match(SYN_SEMIC);
+            }*/
             return;
         case SYN_BRACE_L:
 #if defined(syntaxanalyzer)
@@ -683,43 +772,41 @@ void SyntaxAnalyzer::PrimaryList(void){
     return;
 }
 
+
 void SyntaxAnalyzer::PList(void){
-    if(GlobalScopeValue && InStruct)
-        struct_info.push_back(id_primary);
+    if(GlobalScopeValue){
+        id_primary.value_type = statement_type;
+        if(StructDefineList){
+            struct_body.push_back(id_primary);
+        }
+        else{
+            struct_info.push_back(id_primary);
+        }
+    }
     if(CurrentTokenType == SYN_COMMA){
 #if defined(syntaxanalyzer)
     std::cout << "PList-> ,Primary PList" << std::endl;
 #endif
         Match(SYN_COMMA);
+        if(CurrentTokenType == SYN_BRACE_R){
+            if(!StructDefineList){
+                BuildSymbolTable();
+                ResetAlias();
+            }
+            return;
+        }
         Primary(CurrentTokenType);
         PList();
     }
     else{
 #if defined(syntaxanalyzer)
     std::cout << "PList->" << std::endl;
-#endif
+#endif  
+        ;
     }
     return;
 }
 
-static void ResetGlobalvalue(void){
-    store_type = 0;
-    limit_type = 0;
-    statement_type = 0;
-    id_name = "";
-    function_name = "";
-    id_primary.arrayinfo.Dimension = 0;
-    id_primary.arrayinfo.dims.erase(id_primary.arrayinfo.dims.cbegin(),id_primary.arrayinfo.dims.cend());
-    id_primary.StringValue = "";
-    id_primary.number.realNumber.floatNumber.DoubleNumber = 0;
-    id_primary.number.realNumber.intgerNumber.LongNumber = 0;
-}
-
-static void ResetAlias(void){
-    alias_name = "";
-    ResetGlobalvalue();
-    return;
-}
 
 void SyntaxAnalyzer::BuildSymbolTable(void){
     if(GlobalScopeValue && store_type != TYPEDEF){
@@ -729,6 +816,8 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
                 valueinfo.store_type = alias->store_type;
                 valueinfo.limit_type = alias->limit_type;
                 valueinfo.value_type = alias->value_type;
+                valueinfo.value.arrayinfo = alias->arrayinfo;
+                valueinfo.struct_name = alias->struct_name;
                 CopyValue(alias->value_type,id_primary,valueinfo)
             }
         }
@@ -738,13 +827,22 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
             valueinfo.value_type = statement_type;
             if(statement_type & array_mask){
                 valueinfo.value.arrayinfo.Dimension = id_primary.arrayinfo.Dimension;
-                valueinfo.value.arrayinfo.dims = id_primary.arrayinfo.dims;             
+                valueinfo.value.arrayinfo.dims = id_primary.arrayinfo.dims;   
+                valueinfo.block_value.assign(struct_info.cbegin(),struct_info.cend());          
+            }
+            else if(statement_type & (struct_mask | enum_mask | union_mask)){
+                if(!StructDefineList){
+                    valueinfo.struct_body.assign(struct_body.cbegin(),struct_body.cend());
+                }
+                else
+                    valueinfo.block_value.assign(struct_info.cbegin(),struct_info.cend()); 
+                CopyValue(statement_type,id_primary,valueinfo)
             }
             else {
                 CopyValue(statement_type,id_primary,valueinfo)
             }
-
-        }
+            valueinfo.struct_name = struct_name;
+        }  
         valueinfo.value_name = id_name;
         GlobalValue.push_back(valueinfo);
     }
@@ -752,14 +850,20 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
         aliasname.limit_type = limit_type;
         aliasname.value_type = statement_type;
         aliasname.alias = id_name;
+        aliasname.arrayinfo = id_primary.arrayinfo;
+        aliasname.struct_name = struct_name;
         ValueAlais.push_back(aliasname);
     }
-
     return ;
 }
 
 void SyntaxAnalyzer::IdList(void){
-    BuildSymbolTable();
+        if(StructDefineList){
+                struct_body.push_back(id_primary);
+        }
+        else{
+            BuildSymbolTable();   
+        }
     if(CurrentTokenType == SYN_COMMA){
 #if defined(syntaxanalyzer)
     std::cout << "IdList-> , id[=Primary] IdList" << std::endl;
@@ -778,9 +882,11 @@ void SyntaxAnalyzer::IdList(void){
 #if defined(syntaxanalyzer)
     std::cout << "IdList->" << std::endl;
 #endif
-        ResetGlobalvalue();
+        if(!StructDefineList){
+            BuildSymbolTable();
+            ResetAlias();
+        }
     }
-    ResetGlobalvalue(); 
     return;
 }
 //
@@ -823,6 +929,12 @@ void SyntaxAnalyzer::ArgumentList(void){
 }
 
 void SyntaxAnalyzer::Argument(void){
+
+    func_info.args_type.push_back(args_type);
+    args_type.type =0;
+    args_type.argument_name ="";
+    ResetAlias();
+
     if(CurrentTokenType == SYN_COMMA){
 #if defined(syntaxanalyzer)
     std::cout << "Argument-> , ArgumentType Argument" << std::endl;
@@ -846,6 +958,7 @@ void SyntaxAnalyzer::ArgumentType(void){
 #if defined(sytaxanalyzer)
     std::cout << "ArgumentType-> ..." << std::endl;
 #endif
+        args_type.type = -1;
         Match(SYN_TRIDOTS);
         return;        
     }
@@ -866,11 +979,14 @@ void SyntaxAnalyzer::ArgumentType(void){
             Match(SYN_NULL);
             return;
         }
+        id_name = getTokenString();
         Match(SYN_KEYWORD);
         if(CurrentTokenType == SYN_SET){
             Match(SYN_SET);
             Primary(CurrentTokenType);
         }
+        args_type.type = statement_type;
+        args_type.argument_name = id_name;
     }
     return;
 }
@@ -883,6 +999,7 @@ void SyntaxAnalyzer::CompoundSentence(void){
     while(CurrentTokenType != SYN_BRACE_R)
         Statement();
     Match(SYN_BRACE_R);
+
     return;
 }
 
@@ -902,10 +1019,12 @@ void SyntaxAnalyzer::Brace(void){
 #if defined(syntaxanalyzer)
     std::cout << "Brace-> " << std::endl;
 #endif        
-        ;
+        if(CurrentTokenType != SYN_SET){
+            BuildSymbolTable();
+            ResetAlias();
+        }
+
     }
-    BuildSymbolTable();
-    ResetGlobalvalue();
     return;
 }
 
@@ -951,12 +1070,43 @@ long SyntaxAnalyzer::ConstExpress(void){
     return 0;
 }
 
+void SyntaxAnalyzer::EnumList(void){
+#if defined(syntaxanalyzer)
+    std::cout << "EnumList-> id[=Primary] Enum" << std::endl;
+#endif
+    int enum_counter = 0;
+    StructDefineList = true;
+    id_primary.value_type |= long_mask;
+    while(CurrentTokenType != SYN_BRACE_R){
+        id_primary.StringValue = getTokenString();
+        Match(SYN_KEYWORD);
+        if(CurrentTokenType == SYN_SET){
+            Match(SYN_SET);
+            enum_counter = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
+            Match(SYN_NUMBER_LONG);
+        }
+        id_primary.number.realNumber.intgerNumber.LongNumber = enum_counter;
+        if(StructDefineList){
+            struct_body.push_back(id_primary);
+        }
+        if(CurrentTokenType != SYN_BRACE_R)
+            Match(SYN_COMMA);
+        enum_counter++;
+    }
+    StructDefineList = false;
+}
+
 void SyntaxAnalyzer::StructList(void){
 #if defined(syntaxanalyzer)
     std::cout << "StructList-> Statement" << std::endl;
 #endif
-    while(CurrentTokenType != SYN_BRACE_R)
+    StructDefineList = true;
+    int type_copy = statement_type;
+    while(CurrentTokenType != SYN_BRACE_R ){
         Statement();
+    }
+    statement_type = type_copy;
+    StructDefineList = false;
     return;
 }
 
@@ -964,12 +1114,19 @@ void SyntaxAnalyzer::UnionList(void){
 #if defined(syntaxanalyzer)
     std::cout << "id[=Primary] Union" << std::endl;
 #endif
-    Match(SYN_KEYWORD);
+ /*   Match(SYN_KEYWORD);
     if(CurrentTokenType == SYN_SET){
         Match(SYN_SET);
         Primary(CurrentTokenType);
     }
-    Union();
+    Union();*/
+    StructDefineList = true;
+    int type_copy = statement_type;
+    while(CurrentTokenType != SYN_BRACE_R ){
+        Statement();
+    }
+    statement_type = type_copy;
+    StructDefineList = false;
     return;
 }
 
@@ -1042,6 +1199,7 @@ static bool isUnaryExpress(int tokentype){
         case SYN_NUMBER_DOUBLE:
         case SYN_NUMBER_LONG:
         case SYN_PAREN_L:
+        case SYN_FUNCTION:
             return true;
         default:
             return false;       
@@ -1296,7 +1454,6 @@ void SyntaxAnalyzer::EqualClassExpress1(void){
 #if defined(syntaxanalyzer)
     std::cout << "EqualClassExpress1->(== | !=) RelationExpress EqualClassExpress1" << std::endl;
 #endif
-        std::cout << token.tokenValue.StringValue << std::endl;
         Match(getTokenCoding());
         RelationExpress();
         EqualClassExpress1();
@@ -1491,6 +1648,7 @@ void SyntaxAnalyzer::Args(void){
                 switch (CurrentTokenType)
                 {
                     case SYN_STRING:
+                        ReadOnlyData.push_back(getTokenString());
                         Match(SYN_STRING);
                         break;
                     case SYN_NUMBER_DOUBLE:
@@ -1540,7 +1698,7 @@ void SyntaxAnalyzer::UnaryExpress(void){
         else if(CurrentTokenType == SYN_FUNCTION){
             Match(SYN_FUNCTION);
 #if defined(syntaxanalyzer)
-    std::cout << "UnaryExpress-> function(Args)  RealArgument)" << std::endl;
+    std::cout << "UnaryExpress-> function(Args  RealArgument)" << std::endl;
 #endif
             Match(SYN_PAREN_L);
             Args();

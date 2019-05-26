@@ -158,6 +158,7 @@
 #define float_mask      0x2000
 #define array_mask      0x4000
 
+
 #define STATIC          1
 #define AUTO            2
 #define REGISTER        3
@@ -219,6 +220,7 @@ struct ArrayInfo{
 };
 
 struct TokenValue{
+    int value_type;
     std::string StringValue;
     union Number number;
     int value_address;
@@ -247,7 +249,6 @@ struct textPart{
 
 std::map<std::string, struct textPart> MacroValue;
 std::ofstream midfile;
-std::string text1;
 
 
 struct ValueInfo{
@@ -255,7 +256,10 @@ struct ValueInfo{
     10 enum, -1 selfdefined*/
     int limit_type; /* 0 NONE,1 const,2 volaltile*/
     int store_type; /* 0 NONE,1 static,2 auto,3 register,4 extern,5 typedef*/
+    std::string struct_name;
     std::string value_name;
+    std::vector<struct TokenValue> block_value;
+    std::vector<struct TokenValue> struct_body;
     struct TokenValue value;
 };
 
@@ -265,12 +269,19 @@ struct ValueAliasName{
     int store_type;
     int limit_type; /* 0 NONE, 1 const,2 volatile */
     int value_type;
+    struct ArrayInfo arrayinfo;
+    std::string struct_name;
     std::string alias;
+};
+
+struct ArgumentsType{
+    int type;
+    std::string argument_name;
 };
 
 struct FunctionInfo{
     std::string function_name;
-  //  std::vector<struct ArgumentsType> args_type;
+    std::vector<struct ArgumentsType> args_type;
     int     return_type;
 };
 
@@ -278,16 +289,22 @@ struct FunctionInfo{
 std::vector<struct ValueInfo> GlobalValue;
 struct ValueInfo valueinfo;
 struct ValueAliasName aliasname;
+std::vector<struct TokenValue> structlabellist;
 
 int store_type = 0,limit_type = 0,statement_type;
-std::string id_name = "",function_name = "";
+std::string id_name = "",function_name = "",struct_name="";
 std::vector<struct TokenValue> struct_info;
+std::vector<struct TokenValue> struct_body;
 struct TokenValue id_primary;
 
 std::vector<struct ValueAliasName> ValueAlais;
 std::vector<struct FunctionInfo> FuncInfo;
+struct FunctionInfo func_info;
+struct ArgumentsType args_type;
 
 bool GlobalScopeValue = true;
 bool InStruct = false;
 bool InPreProcess = true;
-
+bool StructDefineList = false;
+int list_init = 0;
+std::vector<std::string> ReadOnlyData;

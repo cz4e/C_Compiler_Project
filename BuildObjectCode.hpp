@@ -82,3 +82,8 @@ void CopyToNewId(const std::string idname,struct TokenValue & _valueinfo){
     return;
 }
 
+/*void BulidObejctCode(void){
+    WriteHeadInfo(filename);
+    WriteGlobalValue();
+    WriteFunction();
+}*/

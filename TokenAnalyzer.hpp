@@ -213,6 +213,7 @@ int TokenAnalyzer::NextRead(void){
             return NextRead();
         }
     }
+    return ERROR;
 }
 
 int TokenAnalyzer::ContinueRead(void){
@@ -575,11 +576,13 @@ int TokenAnalyzer::Processor(void){
                         case '/':
                             do{
                                 CurrentChar = ReadAChar();
+                                if(FileHandler.eof())
+                                    break;
                             }while(NOT_NEWLINE(CurrentChar));
                             if(!FileHandler.eof()){
                                 TokenString.pop_back();
                                 TokenLength--;
-                                SeekFileHandler(-1L);
+                                //SeekFileHandler(-1L);
                                 continue;
                             }
                             else{
@@ -910,6 +913,9 @@ int TokenAnalyzer::Processor(void){
                         HeadFile = false;
                         return SYN_TEXT;
                     }
+                }
+                if(CurrentChar == '('){
+                    return SYN_FUNCTION;
                 }
                 return SYN_KEYWORD;
             }
