@@ -1,8 +1,8 @@
-C compiler developed in C++
+# C compiler developed in C++
 
 ！！！unfinished！！！
 
-LexAnalyzer: 		Done
+LexAnalyzer: 		![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/WuLynLinux/C_Compiler_Project/1.svg)
 
 SyntaxAnalyzer: 	Done
 
