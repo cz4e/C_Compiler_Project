@@ -54,12 +54,14 @@
 std::string alias_name;
 int struct_or_union;
 static void ResetGlobalvalue(void){
+
     store_type = 0;
     limit_type = 0;
     statement_type = 0;
     struct_name = "";
     id_name = "";
     function_name = "";
+    address_value = "";
     id_primary.arrayinfo.Dimension = 0;
     id_primary.arrayinfo.dims.erase(id_primary.arrayinfo.dims.cbegin(),id_primary.arrayinfo.dims.cend());
     id_primary.StringValue = "";
@@ -68,6 +70,7 @@ static void ResetGlobalvalue(void){
     struct_info.erase(struct_info.cbegin(),struct_info.cend());
     struct_body.erase(struct_body.cbegin(),struct_body.cend());
 
+    valueinfo.isSetValue = false;
     valueinfo.value.arrayinfo.Dimension = 0;
     valueinfo.value.arrayinfo.dims.erase(valueinfo.value.arrayinfo.dims.cbegin(),valueinfo.value.arrayinfo.dims.cend());
     valueinfo.value.StringValue = "";
@@ -272,6 +275,7 @@ bool SyntaxAnalyzer::isControlInstruction(int tokenvalue){
 }
 void SyntaxAnalyzer::BuildAST(void){
     Match(-2);
+    valueinfo.isSetValue = false;
     while(!isEOF()){
         Statement();
     }
@@ -705,6 +709,8 @@ void SyntaxAnalyzer::Type(void){
 
 
 void SyntaxAnalyzer::Primary(int tokenvalue){
+    bool InString = false;
+    valueinfo.isSetValue = true;
     switch(tokenvalue){
         case SYN_NUMBER_DOUBLE:
 #if defined(syntaxanalyzer)
@@ -727,7 +733,21 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
     std::cout << "Primary-> string"<< token.tokenValue.StringValue  << std::endl;
 #endif
             statement_type |= string_mask;
-            ReadOnlyData.push_back(getTokenString());
+            for(auto _char:getTokenString()){
+                if(_char == '\''){
+                    if(InString){
+                        continue;
+                    }
+                    else{
+                        break;
+                    }
+                }
+                else if(_char == '\"'){
+                    InString = true;
+                }
+            }
+            if(InString)
+                ReadOnlyData.push_back(getTokenString());
             id_primary.StringValue = token.tokenValue.StringValue;
             Match(SYN_STRING);
             return;
@@ -757,6 +777,11 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
                 Match(SYN_COMMA);
             }
             Match(SYN_BRACE_R);
+            return;
+        case SYN_BIT_AND:
+            Match(SYN_BIT_AND);
+            address_value = getTokenString();
+            Match(SYN_KEYWORD);
             return;
     }
 }
@@ -844,6 +869,7 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
             valueinfo.struct_name = struct_name;
         }  
         valueinfo.value_name = id_name;
+        valueinfo.value.value_address = address_value;
         GlobalValue.push_back(valueinfo);
     }
     else if(GlobalScopeValue && store_type == TYPEDEF){
@@ -859,7 +885,7 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
 
 void SyntaxAnalyzer::IdList(void){
         if(StructDefineList){
-                struct_body.push_back(id_primary);
+            struct_body.push_back(id_primary);
         }
         else{
             BuildSymbolTable();   
@@ -882,10 +908,11 @@ void SyntaxAnalyzer::IdList(void){
 #if defined(syntaxanalyzer)
     std::cout << "IdList->" << std::endl;
 #endif
-        if(!StructDefineList){
+        if(StructDefineList){
             BuildSymbolTable();
             ResetAlias();
         }
+        ;
     }
     return;
 }
@@ -1629,6 +1656,7 @@ static bool isConstantExpress(int tokentype){
     }
 }
 void SyntaxAnalyzer::Args(void){
+    bool InString = false;
             if(CurrentTokenType == SYN_KEYWORD){
 #if defined(syntaxanalyzer)
     std::cout << "Args-> id" << token.tokenValue.StringValue << std::endl;
@@ -1648,7 +1676,22 @@ void SyntaxAnalyzer::Args(void){
                 switch (CurrentTokenType)
                 {
                     case SYN_STRING:
+                    for(auto _char:getTokenString()){
+                        if(_char == '\''){
+                            if(InString){
+                                continue;
+                            }
+                            else{
+                                break;
+                            }
+                        }
+                        else if(_char == '\"'){
+                            InString = true;
+                        }
+                    }
+                    if(InString){
                         ReadOnlyData.push_back(getTokenString());
+                    }
                         Match(SYN_STRING);
                         break;
                     case SYN_NUMBER_DOUBLE:
