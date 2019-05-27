@@ -3,8 +3,11 @@ C compiler developed in C++
 ！！！unfinished！！！
 
 LexAnalyzer: 		Done
+
 SyntaxAnalyzer: 	Done
+
 Grammarguidance: 	ing...
+
 BuildCode:			Not yet
 
 A Simple Example:
