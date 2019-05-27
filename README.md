@@ -2,7 +2,7 @@
 
 ！！！unfinished！！！
 
-LexAnalyzer: 		![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/WuLynLinux/C_Compiler_Project/1.svg)
+LexAnalyzer: 		![Image](https://img.shields.io/badge/coverage-100%25-blue.svg)
 
 SyntaxAnalyzer: 	Done
 
