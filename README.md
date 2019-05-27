@@ -2,18 +2,18 @@
 
 ！！！unfinished！！！
 
-LexAnalyzer: 		![Image](https://img.shields.io/badge/coverage-100%25-blue.svg)
+LexAnalyzer: 		![](https://img.shields.io/badge/coverage-100%25-blue.svg)
 
-SyntaxAnalyzer: 	Done
+SyntaxAnalyzer: 	![](https://img.shields.io/badge/coverage-100%25-blue.svg)
 
-Grammarguidance: 	ing...
+Grammarguidance: 	![](https://img.shields.io/badge/coverage-20%25-green.svg)
 
-BuildCode:			Not yet
+BuildCode:			![](https://img.shields.io/badge/coverage-10%25-red.svg)
 
 A Simple Example:
 
 Source code
-![Image](https://github.com/WuLynLinux/C_Complier_Project/blob/master/images/2.png)
+![](https://github.com/WuLynLinux/C_Complier_Project/blob/master/images/2.png)
 
 Assemble code
-![Image](https://github.com/WuLynLinux/C_Complier_Project/blob/master/images/1.png)
+![](https://github.com/WuLynLinux/C_Complier_Project/blob/master/images/1.png)
