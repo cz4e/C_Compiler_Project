@@ -7,6 +7,7 @@ int main(int argc,char *argv[]){
 #if defined(StartSyntaxAnalysis)
     SyntaxAnalyzer Syntaxanalyzer(argv[1]);
     Syntaxanalyzer.BuildAST();
+    BulidObejctCode(argv[1]);
 #elif defined(StartTokenAnalysis)
     TokenAnalyzer TokenAnalyzer;
     TokenAnalyzer.SetFileName(argv[1]);
