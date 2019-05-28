@@ -169,6 +169,8 @@ public:
     inline int getTokenCoding(void);                // 获取token的编码
     bool isType(int tokenvalue);                    // 是否是type
     void BackAToken(void);                          // 后退一个Token
+    void setFileName(const std::string filename);
+    void ReOpenFile(const std::string filename);
 private:
     TokenAnalyzer tokenAnalyzer;
     TOKEN token;
@@ -188,6 +190,20 @@ SyntaxAnalyzer::~SyntaxAnalyzer(){
         Nothing to do
     */
 }
+
+void SyntaxAnalyzer::ReOpenFile(const std::string filename){
+    tokenAnalyzer.CloseFile();
+    setFileName(filename);
+}
+
+void SyntaxAnalyzer::setFileName(const std::string filename){
+    tokenAnalyzer.SetFileName(filename);
+    if(tokenAnalyzer.isEOF()){
+        std::cout << "Not Such file or directory!" << std::endl;
+        exit(1);
+    }
+}
+
 SyntaxAnalyzer::SyntaxAnalyzer(const std::string FileName){
     tokenAnalyzer.SetFileName(FileName);
     if(tokenAnalyzer.isEOF()){
@@ -372,7 +388,22 @@ void SyntaxAnalyzer::StatementFunction(void){
         Match(SYN_SEMIC);
     }
     else if(CurrentTokenType == SYN_BRACE_L){
+        if(RunTimeTrans){
+            assemble_file << "\t.text" << std::endl;
+            assemble_file << "\t.globl\t" << func_info.function_name << std::endl;
+            assemble_file << "\t.type\t" << func_info.function_name << ",@function" << std::endl;
+            assemble_file << func_info.function_name <<":"    << std::endl;
+            assemble_file << "\tpushq   %rbp" << std::endl;
+            assemble_file << "\tmovq    %rsp,%rbp" << std::endl;
+        }
+        FunctionRegion = true;
         CompoundSentence();
+        FunctionRegion = false;
+        if(RunTimeTrans){
+            assemble_file << "\tpopq    %rbp" << std::endl;
+            assemble_file << "\tret" << std::endl;
+            assemble_file << "\t.size\t" << func_info.function_name << ".-" << func_info.function_name << std::endl;
+        }
     }
     return;
 }
@@ -562,9 +593,16 @@ void SyntaxAnalyzer::Statement(void){
     std::cout << "Statement-> return [Express] ;" << std::endl;
 #endif
         Match(SYN_RETURN);
-        if(CurrentTokenType != SYN_SEMIC)
+        if(CurrentTokenType != SYN_SEMIC){
             Express();
-        Match(SYN_SEMIC);
+            Match(SYN_SEMIC);
+        }
+        else{
+            if(RunTimeTrans){
+                assemble_file << "\tnop" << std::endl;
+            }
+            Match(SYN_SEMIC);
+        }
     }
     else if(CurrentTokenType == SYN_BRACE_L){
 #if defined(syntaxanalyzer)
@@ -2095,3 +2133,4 @@ void SyntaxAnalyzer::PreProcessorConditionInstruction(void){
 void SyntaxAnalyzer::LabelList(void){
     ;
 }
+

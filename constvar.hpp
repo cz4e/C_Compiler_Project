@@ -223,7 +223,7 @@ struct TokenValue{
     int value_type;
     std::string StringValue;
     union Number number;
-    int value_address;
+    std::string value_address;
     struct ArrayInfo arrayinfo;
 };
 
@@ -252,6 +252,7 @@ std::ofstream midfile;
 
 
 struct ValueInfo{
+    bool isSetValue;
     int value_type;  /* 1 integer,2 float point number,3 charactor, 4 string,5 short, 6 signed,7 unsigned, 8 struct,9 struct ,
     10 enum, -1 selfdefined*/
     int limit_type; /* 0 NONE,1 const,2 volaltile*/
@@ -292,7 +293,7 @@ struct ValueAliasName aliasname;
 std::vector<struct TokenValue> structlabellist;
 
 int store_type = 0,limit_type = 0,statement_type;
-std::string id_name = "",function_name = "",struct_name="";
+std::string id_name = "",function_name = "",struct_name="",address_value;
 std::vector<struct TokenValue> struct_info;
 std::vector<struct TokenValue> struct_body;
 struct TokenValue id_primary;
@@ -308,3 +309,16 @@ bool InPreProcess = true;
 bool StructDefineList = false;
 int list_init = 0;
 std::vector<std::string> ReadOnlyData;
+
+std::ofstream assemble_file;
+bool RunTimeTrans = false;
+
+bool FunctionRegion = false;
+
+struct LocalValue{
+    int region; /* 0 function ,1 嵌套作用域*/
+    std::string function_name;
+    std::vector<struct ValueInfo> value_info;
+};
+
+std::vector<struct LocalValue> localvalue;

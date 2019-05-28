@@ -466,18 +466,14 @@ void WriteGlobalValue(std::ofstream &file_handler){
 }
 
 void WriteInfo(std::ofstream & assemble_file,std::string last_function){
-    assemble_file << "\t.size\t" << last_function << ", .-" << last_function << std::endl;
-    assemble_file << "\t.ident\t" << CompilerInfo << std::endl;
+
+    assemble_file << "\t.ident\t\t" << CompilerInfo << std::endl;
     assemble_file << "\t.section\t" << ".note.GNU-stack,\"\",@progbits" << std::endl;
     return ; 
 }
 
-void WriteHeadInfo(std::ofstream &assemble_file,const std::string filename){
+void WriteReadOnlyData(std::ofstream &assemble_file){
     int ValueNo = 0;
-
-    assemble_file << "\t.file\t" << "\"" << filename << "\"" << std::endl;
-    WriteGlobalValue(assemble_file);
-
     assemble_file << "\t.text" << std::endl;
     assemble_file << "\t.section\t.rodata" << std::endl;
     
@@ -486,17 +482,44 @@ void WriteHeadInfo(std::ofstream &assemble_file,const std::string filename){
         assemble_file << "\t.string \t" << read_only_data << std::endl;
         ValueNo++;
     }
-    assemble_file << "\t.text" << std::endl;
-    assemble_file << "\t.globl\tmain" << std::endl;
-    assemble_file << "\t.type\tmain,@function" << std::endl;
-    assemble_file << "main:"    << std::endl;
-    WriteInfo(assemble_file,"main");
+}
+
+void WriteFunction(std::ofstream &assemble_file){
+        assemble_file << "\t.text" << std::endl;
+        assemble_file << "\t.globl\t" << func_info.function_name << std::endl;
+        assemble_file << "\t.type\t" << func_info.function_name << ",@function" << std::endl;
+        assemble_file << func_info.function_name <<":"    << std::endl;
+        assemble_file << "\tpushq   %rbp" << std::endl;
+        assemble_file << "\tmovq    %rsp,%rbp" << std::endl;
+        /*
+            Function Block
+        */
+       assemble_file << "\tpopq     %rbp" << std::endl;
+       assemble_file << "\tret" << std::endl;
+       assemble_file << "\t.size\t" << func_info.function_name << ".-" << func_info.function_name << std::endl;
+}
+
+void WriteHeadInfo(std::ofstream &assemble_file,const std::string filename){
+    if(!RunTimeTrans){
+        assemble_file << "\t.file\t" << "\"" << filename << "\"" << std::endl;
+        WriteGlobalValue(assemble_file);
+        WriteReadOnlyData(assemble_file);
+        RunTimeTrans = true;
+        GlobalScopeValue = false;
+    }
 }
 
 
 
 void BulidObejctCode(const std::string filename){
-    std::ofstream assemble_file;
-    assemble_file.open("assembel.s",std::ios_base::out);
+    if(!RunTimeTrans){
+        assemble_file.open("assembel.s",std::ios_base::out);
+    }
+
     WriteHeadInfo(assemble_file,filename);
+
+    if(!RunTimeTrans){
+        WriteReadOnlyData(assemble_file);
+        WriteInfo(assemble_file,"main");
+    }
 }

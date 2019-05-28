@@ -8,6 +8,10 @@ int main(int argc,char *argv[]){
     SyntaxAnalyzer Syntaxanalyzer(argv[1]);
     Syntaxanalyzer.BuildAST();
     BulidObejctCode(argv[1]);
+    Syntaxanalyzer.ReOpenFile(argv[1]);
+    Syntaxanalyzer.BuildAST();
+    BulidObejctCode(argv[1]);
+    WriteInfo(assemble_file,"main");
 #elif defined(StartTokenAnalysis)
     TokenAnalyzer TokenAnalyzer;
     TokenAnalyzer.SetFileName(argv[1]);

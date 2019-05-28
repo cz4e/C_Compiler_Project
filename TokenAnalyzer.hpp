@@ -113,6 +113,7 @@ public:
     inline bool &getGlobalStatus(void);
     int Processor(void);
     int FoundKeyWord(void);
+    void CloseFile(void);
     ~TokenAnalyzer();
 private:
     std::ifstream FileHandler;
@@ -127,6 +128,9 @@ TokenAnalyzer::~TokenAnalyzer(){
     //Nothing to do
 }
 
+void TokenAnalyzer::CloseFile(void){
+    FileHandler.close();
+}
 
 void TokenAnalyzer::SetFileName(const std::string FileName){
     FileHandler.open(FileName,std::ios_base::in);
@@ -227,8 +231,8 @@ int TokenAnalyzer::ContinueRead(void){
             return SYN_STRING;
         }
         else{
-            std::cout << "Symbol Error!" << std::endl;
-            exit(1);
+            AppendCharToString(CurrentChar)
+            return IsStringOrChar();
         }
     }
     else if(ZeroToSeven(CurrentChar)){
@@ -251,7 +255,7 @@ int TokenAnalyzer::ContinueRead(void){
                 SeekFileHandler(-1L);
                 return NextRead();
             default:
-                std::cout << "Symbol Error!" << CurrentChar << std::endl;
+                std::cout << "Lex:Symbol Error!" << CurrentChar << std::endl;
                 exit(1);
         }
     }
@@ -287,7 +291,7 @@ int TokenAnalyzer::IsStringOrChar(void){
         return SYN_STRING;
     }
     else{
-        std::cout << "Symbol Error!" << CurrentChar << std::endl;
+        std::cout << "Lex:Symbol Error!" << CurrentChar << std::endl;
         exit(1);
     }
 }
@@ -409,7 +413,7 @@ int TokenAnalyzer::IsHexFloat(void){
             if(CurrentChar == 'p' || CurrentChar == 'P')
                 ; // Nothing to do
             else{
-                std::cout << "Symbol Error!" << CurrentChar << std::endl;
+                std::cout <<"Lex:Symbol Error!" << CurrentChar << std::endl;
                 exit(1);
             }
         case 'p':
@@ -436,7 +440,7 @@ int TokenAnalyzer::IsHexFloat(void){
                     return SYN_KEYWORD;
                 }
         default:
-            std::cout << "Symbol Error!" << CurrentChar << std::endl;
+            std::cout << "Lex:Symbol Error!" << CurrentChar << std::endl;
             exit(1);
     }
 }

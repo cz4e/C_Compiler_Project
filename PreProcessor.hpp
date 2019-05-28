@@ -299,7 +299,6 @@ void PreProcessor::StartPreProcessor(void){
                     ProcessPragma();
                     break;
                 case SYN_MACRO_ENDIF:
-                   // matchToken();
                     EraseSubString_("#endif")
                     break;
             }
