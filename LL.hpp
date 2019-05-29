@@ -101,11 +101,14 @@ static void ResetGlobalvalue(void){
 
     local_value.function_name = "";
     local_value.value_info.erase(local_value.value_info.cbegin(),local_value.value_info.cend());
+    anonymous_domain_value.value_info.erase(anonymous_domain_value.value_info.cbegin(),anonymous_domain_value.value_info.cend());
 }
 
 static void ResetAlias(void){
-    alias_name = "";
-    ResetGlobalvalue();
+    if(!BuildCode){
+        alias_name = "";
+        ResetGlobalvalue();
+    }
     return;
 }
 
@@ -676,7 +679,24 @@ void SyntaxAnalyzer::Statement(void){
 #if defined(syntaxanalyzer)
     std::cout << "Statement->CompoundSentence" << std::endl;
 #endif
+         bool StoreStatus;
+         bool StoreGlobalStatus ;
+        if(InAnonymousDomain == 0){
+            InAnonymousDomain++;
+            domain_number++;
+        StoreStatus = FunctionRegion;
+        StoreGlobalStatus = GlobalScopeValue;
+        }
+        GlobalScopeValue = false;
+        FunctionRegion = false;
+
         CompoundSentence();
+
+        if(InAnonymousDomain != 0){
+            InAnonymousDomain--;
+        FunctionRegion = StoreStatus;
+        GlobalScopeValue = StoreGlobalStatus;
+        }
     }
     else if(isControlInstruction(CurrentTokenType)){
 #if defined(syntaxanalyzer)
@@ -854,6 +874,7 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
             }
             if(InString){
                 ReadOnlyData["string"].push_back(getTokenString());
+            }
             id_primary.StringValue = token.tokenValue.StringValue;
             Match(SYN_STRING);
             return;
@@ -940,64 +961,80 @@ void SyntaxAnalyzer::PList(void){
 
 
 void SyntaxAnalyzer::BuildSymbolTable(void){
-    if((GlobalScopeValue || FunctionRegion) && store_type != TYPEDEF){
-        if(statement_type & seldefine_mask){
-            auto alias = getAlias(alias_name);
-            if(alias != ValueAlais.cend()){
-                valueinfo.store_type = alias->store_type;
-                valueinfo.limit_type = alias->limit_type;
-                valueinfo.value_type = alias->value_type;
-                valueinfo.value.arrayinfo = alias->arrayinfo;
-                valueinfo.struct_name = alias->struct_name;
-                CopyValue(alias->value_type,id_primary,valueinfo)
-            }
-        }
-        else{
-            valueinfo.store_type = store_type;
-            valueinfo.limit_type = limit_type;
-            valueinfo.value_type = statement_type;
-            if(statement_type & array_mask){
-                valueinfo.value.arrayinfo.Dimension = id_primary.arrayinfo.Dimension;
-                valueinfo.value.arrayinfo.dims = id_primary.arrayinfo.dims;   
-                valueinfo.block_value.assign(struct_info.cbegin(),struct_info.cend());          
-            }
-            else if(statement_type & (struct_mask | enum_mask | union_mask)){
-                if(!StructDefineList){
-                    valueinfo.struct_body.assign(struct_body.cbegin(),struct_body.cend());
+    if(!BuildCode){
+        if((GlobalScopeValue || FunctionRegion || InAnonymousDomain) && store_type != TYPEDEF){
+            if(statement_type & seldefine_mask){
+                auto alias = getAlias(alias_name);
+                if(alias != ValueAlais.cend()){
+                    valueinfo.store_type = alias->store_type;
+                    valueinfo.limit_type = alias->limit_type;
+                    valueinfo.value_type = alias->value_type;
+                    valueinfo.value.arrayinfo = alias->arrayinfo;
+                    valueinfo.struct_name = alias->struct_name;
+                    CopyValue(alias->value_type,id_primary,valueinfo)
                 }
-                else
-                    valueinfo.block_value.assign(struct_info.cbegin(),struct_info.cend()); 
-                CopyValue(statement_type,id_primary,valueinfo)
-            }
-            else {
-                CopyValue(statement_type,id_primary,valueinfo)
-            }
-            valueinfo.struct_name = struct_name;
-        }  
-        valueinfo.value_name = id_name;
-        valueinfo.value.value_address = address_value;
-        if(GlobalScopeValue)
-            GlobalValue.push_back(valueinfo);
-        else if(FunctionRegion)
-        {
-            if(localvalue.count(func_info.function_name)){
-                localvalue[func_info.function_name].value_info.push_back(valueinfo);
             }
             else{
-                local_value.function_name = func_info.function_name;
-                local_value.value_info.push_back(valueinfo);
-                localvalue.insert(std::pair<std::string,struct LocalValue>(func_info.function_name,local_value));
+                valueinfo.store_type = store_type;
+                valueinfo.limit_type = limit_type;
+                valueinfo.value_type = statement_type;
+                if(statement_type & array_mask){
+                    valueinfo.value.arrayinfo.Dimension = id_primary.arrayinfo.Dimension;
+                    valueinfo.value.arrayinfo.dims = id_primary.arrayinfo.dims;   
+                    valueinfo.block_value.assign(struct_info.cbegin(),struct_info.cend());          
+                }
+                else if(statement_type & (struct_mask | enum_mask | union_mask)){
+                    if(!StructDefineList){
+                        valueinfo.struct_body.assign(struct_body.cbegin(),struct_body.cend());
+                    }
+                    else
+                        valueinfo.block_value.assign(struct_info.cbegin(),struct_info.cend()); 
+                    CopyValue(statement_type,id_primary,valueinfo)
+                }
+                else {
+                    CopyValue(statement_type,id_primary,valueinfo)
+                }
+                valueinfo.struct_name = struct_name;
+            }  
+            valueinfo.value_name = id_name;
+            valueinfo.value.value_address = address_value;
+            if(GlobalScopeValue)
+                GlobalValue.push_back(valueinfo);
+            else if(FunctionRegion && !InAnonymousDomain)
+            {
+                if(localvalue.count(func_info.function_name)){
+                    localvalue[func_info.function_name].value_info.push_back(valueinfo);
+                }
+                else{
+                    local_value.function_name = func_info.function_name;
+                    local_value.value_info.push_back(valueinfo);
+                    localvalue.insert(std::pair<std::string,struct LocalValue>(func_info.function_name,local_value));
+                }
             }
-        }
+            else if(InAnonymousDomain){
+                /*anonymous_domain_value.function_name = "";
+                std::cout << valueinfo.value_name << std::endl;
+                anonymous_domain_value.value_info.push_back(valueinfo);
+                Anonymous_domain.insert(std::pair<int,struct LocalValue>(domain_number,anonymous_domain_value));*/
+                if(Anonymous_domain.count(domain_number)){
+                    Anonymous_domain[domain_number].value_info.push_back(valueinfo);
+                }
+                else{
+                    anonymous_domain_value.function_name = "";
+                    anonymous_domain_value.value_info.push_back(valueinfo);
+                    Anonymous_domain.insert(std::pair<int,struct LocalValue>(domain_number,anonymous_domain_value));
+                }
+            }
 
-    }
-    else if(GlobalScopeValue && store_type == TYPEDEF){
-        aliasname.limit_type = limit_type;
-        aliasname.value_type = statement_type;
-        aliasname.alias = id_name;
-        aliasname.arrayinfo = id_primary.arrayinfo;
-        aliasname.struct_name = struct_name;
-        ValueAlais.push_back(aliasname);
+        }
+        else if(GlobalScopeValue && store_type == TYPEDEF){
+            aliasname.limit_type = limit_type;
+            aliasname.value_type = statement_type;
+            aliasname.alias = id_name;
+            aliasname.arrayinfo = id_primary.arrayinfo;
+            aliasname.struct_name = struct_name;
+            ValueAlais.push_back(aliasname);
+        }
     }
     return ;
 }
@@ -1182,7 +1219,7 @@ long SyntaxAnalyzer::ConstExpress(void){
     std::cout << "ConstExpress-> Num_long" << std::endl;
 #endif
             number_value = std::stol(getTokenString().c_str()); 
-            ReadOnlyData["long"].push_back()
+           // ReadOnlyData["long"].push_back(getTokenString());
             Match(SYN_NUMBER_LONG);
             return number_value;
         case SYN_NUMBER_DOUBLE:
@@ -1190,6 +1227,7 @@ long SyntaxAnalyzer::ConstExpress(void){
     std::cout << "ConstExpress-> Num_double" << std::endl;
 #endif
             Match(SYN_NUMBER_DOUBLE);
+           // ReadOnlyData["double"].push_back(getTokenString());
             return 0;
         case SYN_STRING:
 #if defined(syntaxanalyzer)
