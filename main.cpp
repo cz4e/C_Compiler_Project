@@ -10,7 +10,6 @@ int main(int argc,char *argv[]){
     BulidObejctCode(argv[1]);
     Syntaxanalyzer.ReOpenFile(argv[1]);
     Syntaxanalyzer.BuildAST();
-    BulidObejctCode(argv[1]);
     WriteInfo(assemble_file,"main");
 #elif defined(StartTokenAnalysis)
     TokenAnalyzer TokenAnalyzer;
