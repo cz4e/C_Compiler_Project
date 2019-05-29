@@ -679,13 +679,13 @@ void SyntaxAnalyzer::Statement(void){
 #if defined(syntaxanalyzer)
     std::cout << "Statement->CompoundSentence" << std::endl;
 #endif
-         bool StoreStatus;
-         bool StoreGlobalStatus ;
+        bool StoreStatus;
+        bool StoreGlobalStatus ;
         if(InAnonymousDomain == 0){
             InAnonymousDomain++;
             domain_number++;
-        StoreStatus = FunctionRegion;
-        StoreGlobalStatus = GlobalScopeValue;
+            StoreStatus = FunctionRegion;
+            StoreGlobalStatus = GlobalScopeValue;
         }
         GlobalScopeValue = false;
         FunctionRegion = false;
@@ -694,8 +694,8 @@ void SyntaxAnalyzer::Statement(void){
 
         if(InAnonymousDomain != 0){
             InAnonymousDomain--;
-        FunctionRegion = StoreStatus;
-        GlobalScopeValue = StoreGlobalStatus;
+            FunctionRegion = StoreStatus;
+            GlobalScopeValue = StoreGlobalStatus;
         }
     }
     else if(isControlInstruction(CurrentTokenType)){

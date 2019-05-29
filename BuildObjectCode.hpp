@@ -183,7 +183,9 @@ void CopyToNewId(const std::string idname,struct TokenValue & _valueinfo){
 }
 
 void WriteGlobalValue(std::ofstream &file_handler){
-    file_handler << "\t.text" << std::endl;
+    if(GlobalValue.cend() != GlobalValue.cbegin()){
+        file_handler << "\t.text" << std::endl;
+    }
     int times = 0;
     for(auto global:GlobalValue){
         if(     global.value_type & char_mask){
@@ -474,13 +476,18 @@ void WriteInfo(std::ofstream & assemble_file,std::string last_function){
 
 void WriteReadOnlyData(std::ofstream &assemble_file){
     int ValueNo = 0;
-    assemble_file << "\t.text" << std::endl;
-    assemble_file << "\t.section\t.rodata" << std::endl;
+
+    if(!ReadOnlyData.empty()){
+        assemble_file << "\t.text" << std::endl;
+        assemble_file << "\t.section\t.rodata" << std::endl;
+    }
     
-    for(auto read_only_data:ReadOnlyData){
-        assemble_file << ".LC" << ValueNo << ":" << std::endl;
-        assemble_file << "\t.string \t" << read_only_data << std::endl;
-        ValueNo++;
+    for(auto read_only_data_vec:ReadOnlyData){
+        for(auto read_only_data:read_only_data_vec.second){
+            assemble_file << ".LC" << ValueNo << ":" << std::endl;
+            assemble_file << "\t.string \t" << read_only_data << std::endl;
+            ValueNo++;
+        }
     }
 }
 

@@ -7,10 +7,16 @@ int main(int argc,char *argv[]){
 #if defined(StartSyntaxAnalysis)
     SyntaxAnalyzer Syntaxanalyzer(argv[1]);
     Syntaxanalyzer.BuildAST();
-    BulidObejctCode(argv[1]);
+    /*BulidObejctCode(argv[1]);
     Syntaxanalyzer.ReOpenFile(argv[1]);
     Syntaxanalyzer.BuildAST();
-    WriteInfo(assemble_file,"main");
+    WriteInfo(assemble_file,"main");*/
+    for(auto iter:Anonymous_domain){
+        std::cout << "Level: " << iter.first << std::endl;
+        for(auto iter_:iter.second.value_info){
+            std::cout << iter_.value_name << std::endl;
+        }
+    }
 #elif defined(StartTokenAnalysis)
     TokenAnalyzer TokenAnalyzer;
     TokenAnalyzer.SetFileName(argv[1]);
