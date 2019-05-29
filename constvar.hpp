@@ -327,6 +327,13 @@ struct LocalValue{
 std::map<std::string,struct LocalValue>  localvalue;
 struct LocalValue local_value;
 
+std::map<int,struct LocalValue> Anonymous_domain;
+struct LocalValue anonymous_domain_value;
+int domain_number = 0;
+int InAnonymousDomain = 0;
+
 std::map<std::string,bool> RegisterBitMap = {
     {"rax",false},{"rbx",false},{"rcx",false},{"rdx",false},{"rsi",false},{"rdi",false},
 };
+
+bool BuildCode = false;
