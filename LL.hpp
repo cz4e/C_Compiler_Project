@@ -4,7 +4,7 @@
 
 #include "TokenAnalyzer.hpp"
 #include "BuildObjectCode.hpp"
-
+#define AMD64_SIZE      16
 #define process_id_or_function_statement    do{\
                                                 int type = CurrentTokenType;\
                                                 while(isType(CurrentTokenType))\
@@ -37,6 +37,10 @@
                                                     StatementID();\
                                                 }\
                                                 else if(CurrentTokenType == SYN_FUNCTION){\
+                                                    if(store_type == STATIC){\
+                                                        func_info.store_type = static_mask;\
+                                                    }\
+                                                    func_info.limit_type = limit_type;\
                                                     func_info.return_type = statement_type;\
                                                     statement_type = 0;\
                                                     StatementFunction();\
@@ -51,6 +55,20 @@
                                     exit(ErrorCode);\
                                 }while(0);
 
+#define CalculateBytes(_type)   do{\
+                                    if(iter_begin.value_type & pointer_mask){\
+                                        TotalBytes += sizeof(long);\
+                                    }\
+                                    else if(iter_begin.value_type & array_mask){\
+                                        long Count = 1;\
+                                        for(auto dims_ : iter_begin.value.arrayinfo.dims)\
+                                            Count *= dims_;\
+                                        TotalBytes += sizeof(_type) * Count;\
+                                    }\
+                                    else{\
+                                        TotalBytes += sizeof(_type);\
+                                    }\
+                                }while(0);
 std::string alias_name;
 int struct_or_union;
 static void ResetGlobalvalue(void){
@@ -60,7 +78,9 @@ static void ResetGlobalvalue(void){
     statement_type = 0;
     struct_name = "";
     id_name = "";
-    function_name = "";
+    if(!FunctionRegion){
+        function_name = "";
+    }
     address_value = "";
     id_primary.arrayinfo.Dimension = 0;
     id_primary.arrayinfo.dims.erase(id_primary.arrayinfo.dims.cbegin(),id_primary.arrayinfo.dims.cend());
@@ -78,6 +98,9 @@ static void ResetGlobalvalue(void){
     valueinfo.value.number.realNumber.intgerNumber.LongNumber = 0;
     valueinfo.block_value.erase(valueinfo.block_value.cbegin(),valueinfo.block_value.cend());
     valueinfo.struct_body.erase(valueinfo.struct_body.cbegin(),valueinfo.struct_body.cend());
+
+    local_value.function_name = "";
+    local_value.value_info.erase(local_value.value_info.cbegin(),local_value.value_info.cend());
 }
 
 static void ResetAlias(void){
@@ -87,9 +110,11 @@ static void ResetAlias(void){
 }
 
 static void ResetFuncDefine(void){
-    func_info.function_name = "";
-    func_info.args_type.erase(func_info.args_type.cbegin(),func_info.args_type.cend());
-    func_info.return_type = 0;
+    if(!FunctionRegion){
+        func_info.function_name = "";
+        func_info.args_type.erase(func_info.args_type.cbegin(),func_info.args_type.cend());
+        func_info.return_type = 0;
+    }
 }
 
 class SyntaxAnalyzer{
@@ -390,21 +415,64 @@ void SyntaxAnalyzer::StatementFunction(void){
     else if(CurrentTokenType == SYN_BRACE_L){
         if(RunTimeTrans){
             assemble_file << "\t.text" << std::endl;
-            assemble_file << "\t.globl\t" << func_info.function_name << std::endl;
+            if(!(func_info.store_type & static_mask)){
+                assemble_file << "\t.globl\t" << func_info.function_name << std::endl;
+            }
             assemble_file << "\t.type\t" << func_info.function_name << ",@function" << std::endl;
             assemble_file << func_info.function_name <<":"    << std::endl;
             assemble_file << "\tpushq   %rbp" << std::endl;
             assemble_file << "\tmovq    %rsp,%rbp" << std::endl;
         }
         FunctionRegion = true;
+        GlobalScopeValue = false;
+        long TotalBytes = AMD64_SIZE;
+        for(auto iter_begin:localvalue[func_info.function_name].value_info){
+            if(     iter_begin.value_type & char_mask){
+                CalculateBytes(char)
+            }
+            else if(iter_begin.value_type & short_mask){
+                CalculateBytes(short)
+            }
+            else if(iter_begin.value_type & int_mask){
+                CalculateBytes(int)
+            }
+            else if(iter_begin.value_type & long_mask){
+                CalculateBytes(long)
+            }
+            else if(iter_begin.value_type & float_mask){
+                CalculateBytes(float)
+            }
+            else if(iter_begin.value_type & double_mask){
+                CalculateBytes(double)
+            }
+        }
+        if(RunTimeTrans){
+            while(TotalBytes % 8 || TotalBytes % 16) TotalBytes++;
+            assemble_file << "\tsubq    $" <<   TotalBytes  <<  ",%rsp" << std::endl;
+            assemble_file << "\tmovq    \%fs:40,%rax" << std::endl;
+            assemble_file << "\tmovq    %rax,-8(%rbp)" << std::endl;
+            assemble_file << "\txorl    \%eax,\%eax"  << std::endl;
+        }
         CompoundSentence();
         FunctionRegion = false;
+        GlobalScopeValue = false;
+
+        /* Function Block */
         if(RunTimeTrans){
-            assemble_file << "\tpopq    %rbp" << std::endl;
+            assemble_file << "\tmovq    -8(%rbp),%rdx" << std::endl;
+            assemble_file << "\txorq    \%fs:40,%rdx" << std::endl;
+            assemble_file << "\tje      endofproc_" << func_info.function_name  << std::endl;
+            assemble_file << "\tcall    __stack_chk_fail@PLT" << std::endl;
+            assemble_file << "endofproc_" << func_info.function_name << ": " << std::endl;
+            assemble_file << "\tleave" << std::endl;
+           /* else{
+                assemble_file << "\tpopq    %rbp" << std::endl;
+            }*/
             assemble_file << "\tret" << std::endl;
-            assemble_file << "\t.size\t" << func_info.function_name << ".-" << func_info.function_name << std::endl;
+            assemble_file << "\t.size\t" << func_info.function_name << ",.-" << func_info.function_name << std::endl;
         }
     }
+    ResetFuncDefine();
     return;
 }
 
@@ -784,8 +852,8 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
                     InString = true;
                 }
             }
-            if(InString)
-                ReadOnlyData.push_back(getTokenString());
+            if(InString){
+                ReadOnlyData["string"].push_back(getTokenString());
             id_primary.StringValue = token.tokenValue.StringValue;
             Match(SYN_STRING);
             return;
@@ -872,7 +940,7 @@ void SyntaxAnalyzer::PList(void){
 
 
 void SyntaxAnalyzer::BuildSymbolTable(void){
-    if(GlobalScopeValue && store_type != TYPEDEF){
+    if((GlobalScopeValue || FunctionRegion) && store_type != TYPEDEF){
         if(statement_type & seldefine_mask){
             auto alias = getAlias(alias_name);
             if(alias != ValueAlais.cend()){
@@ -908,7 +976,20 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
         }  
         valueinfo.value_name = id_name;
         valueinfo.value.value_address = address_value;
-        GlobalValue.push_back(valueinfo);
+        if(GlobalScopeValue)
+            GlobalValue.push_back(valueinfo);
+        else if(FunctionRegion)
+        {
+            if(localvalue.count(func_info.function_name)){
+                localvalue[func_info.function_name].value_info.push_back(valueinfo);
+            }
+            else{
+                local_value.function_name = func_info.function_name;
+                local_value.value_info.push_back(valueinfo);
+                localvalue.insert(std::pair<std::string,struct LocalValue>(func_info.function_name,local_value));
+            }
+        }
+
     }
     else if(GlobalScopeValue && store_type == TYPEDEF){
         aliasname.limit_type = limit_type;
@@ -1101,6 +1182,7 @@ long SyntaxAnalyzer::ConstExpress(void){
     std::cout << "ConstExpress-> Num_long" << std::endl;
 #endif
             number_value = std::stol(getTokenString().c_str()); 
+            ReadOnlyData["long"].push_back()
             Match(SYN_NUMBER_LONG);
             return number_value;
         case SYN_NUMBER_DOUBLE:
@@ -1728,7 +1810,7 @@ void SyntaxAnalyzer::Args(void){
                         }
                     }
                     if(InString){
-                        ReadOnlyData.push_back(getTokenString());
+                        ReadOnlyData["string"].push_back(getTokenString());
                     }
                         Match(SYN_STRING);
                         break;

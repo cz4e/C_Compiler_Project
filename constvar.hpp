@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#define REGISTERS       6
 //#define TOKENANALYZER            1
 //#define syntaxanalyzer           2
 #define DEBUG                    3
@@ -157,7 +158,7 @@
 #define pointer_mask    0x1000
 #define float_mask      0x2000
 #define array_mask      0x4000
-
+#define static_mask     0x8000
 
 #define STATIC          1
 #define AUTO            2
@@ -215,12 +216,12 @@ union Number{
 };
 
 struct ArrayInfo{
-    int Dimension;
+    long Dimension;
     std::vector<int> dims;
 };
 
 struct TokenValue{
-    int value_type;
+    long value_type;
     std::string StringValue;
     union Number number;
     std::string value_address;
@@ -242,7 +243,7 @@ bool SwitchForMacro = false;
 std::map<std::string,bool> IncludeFile;
 
 struct textPart{
-    int MacroType;  // 1 general ,2 macro function
+    long MacroType;  // 1 general ,2 macro function
     std::vector<std::string> arguments;
     std::string textpart;
 };
@@ -253,10 +254,10 @@ std::ofstream midfile;
 
 struct ValueInfo{
     bool isSetValue;
-    int value_type;  /* 1 integer,2 float point number,3 charactor, 4 string,5 short, 6 signed,7 unsigned, 8 struct,9 struct ,
+    long value_type;  /* 1 integer,2 float point number,3 charactor, 4 string,5 short, 6 signed,7 unsigned, 8 struct,9 struct ,
     10 enum, -1 selfdefined*/
-    int limit_type; /* 0 NONE,1 const,2 volaltile*/
-    int store_type; /* 0 NONE,1 static,2 auto,3 register,4 extern,5 typedef*/
+    long limit_type; /* 0 NONE,1 const,2 volaltile*/
+    long store_type; /* 0 NONE,1 static,2 auto,3 register,4 extern,5 typedef*/
     std::string struct_name;
     std::string value_name;
     std::vector<struct TokenValue> block_value;
@@ -267,23 +268,25 @@ struct ValueInfo{
 
 
 struct ValueAliasName{
-    int store_type;
-    int limit_type; /* 0 NONE, 1 const,2 volatile */
-    int value_type;
+    long store_type;
+    long limit_type; /* 0 NONE, 1 const,2 volatile */
+    long value_type;
     struct ArrayInfo arrayinfo;
     std::string struct_name;
     std::string alias;
 };
 
 struct ArgumentsType{
-    int type;
+    long type;
     std::string argument_name;
 };
 
 struct FunctionInfo{
     std::string function_name;
     std::vector<struct ArgumentsType> args_type;
-    int     return_type;
+    long     store_type;
+    long     limit_type;
+    long     return_type;
 };
 
 
@@ -292,7 +295,7 @@ struct ValueInfo valueinfo;
 struct ValueAliasName aliasname;
 std::vector<struct TokenValue> structlabellist;
 
-int store_type = 0,limit_type = 0,statement_type;
+long store_type = 0,limit_type = 0,statement_type;
 std::string id_name = "",function_name = "",struct_name="",address_value;
 std::vector<struct TokenValue> struct_info;
 std::vector<struct TokenValue> struct_body;
@@ -308,7 +311,7 @@ bool InStruct = false;
 bool InPreProcess = true;
 bool StructDefineList = false;
 int list_init = 0;
-std::vector<std::string> ReadOnlyData;
+std::map<std::string,std::vector<std::string>> ReadOnlyData;
 
 std::ofstream assemble_file;
 bool RunTimeTrans = false;
@@ -316,9 +319,14 @@ bool RunTimeTrans = false;
 bool FunctionRegion = false;
 
 struct LocalValue{
-    int region; /* 0 function ,1 嵌套作用域*/
+ /* 0 function ,1 嵌套作用域*/
     std::string function_name;
     std::vector<struct ValueInfo> value_info;
 };
 
-std::vector<struct LocalValue> localvalue;
+std::map<std::string,struct LocalValue>  localvalue;
+struct LocalValue local_value;
+
+std::map<std::string,bool> RegisterBitMap = {
+    {"rax",false},{"rbx",false},{"rcx",false},{"rdx",false},{"rsi",false},{"rdi",false},
+};

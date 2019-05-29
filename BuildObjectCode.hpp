@@ -80,7 +80,7 @@
                                                             << "\t.type\t" << global.value_name << ",@object" << std::endl;\
                                             file_handler << "\t.size\t" << global.value_name << "," << sizeof(int) << std::endl;\
                                             file_handler << global.value_name << ":" << std::endl;\
-                                            file_handler << "\t.long\t" << global.value.value_address << std::endl;\
+                                            file_handler << "\t.quad\t" << global.value.value_address << std::endl;\
                                     }while(0);
 
 #define ShortTypePointer(type)      do{\
@@ -89,7 +89,7 @@
                                                             << "\t.type\t" << global.value_name << ",@object" << std::endl;\
                                             file_handler << "\t.size\t" << global.value_name << "," << sizeof(short) << std::endl;\
                                             file_handler << global.value_name << ":" << std::endl;\
-                                            file_handler << "\t.value\t" << global.value.value_address << std::endl;\
+                                            file_handler << "\t.quad\t" << global.value.value_address << std::endl;\
                                     }while(0);
 
 #define CharTypePointer(type)       do{\
@@ -98,7 +98,7 @@
                                                             << "\t.type\t" << global.value_name << ",@object" << std::endl;\
                                             file_handler << "\t.size\t" << global.value_name << "," << sizeof(char) << std::endl;\
                                             file_handler << global.value_name << ":" << std::endl;\
-                                            file_handler << "\t.byte\t" << global.value.value_address << std::endl;\
+                                            file_handler << "\t.quad\t" << global.value.value_address << std::endl;\
                                     }while(0);
 
 #define FloatTypePointer(type)      do{\
@@ -107,7 +107,7 @@
                                             << "\t.type\t" << global.value_name << ",@object" << std::endl;\
                                         file_handler << "\t.size\t" << global.value_name << "," << sizeof(float) << std::endl;\
                                         file_handler << global.value_name << ":" << std::endl;\
-                                        file_handler << "\t.float\t" << global.value.value_address << std::endl;\
+                                        file_handler << "\t.quad\t" << global.value.value_address << std::endl;\
                                     }while(0);
 
 #define DoubleTypePointer(type)     do{\
@@ -116,7 +116,7 @@
                                             << "\t.type\t" << global.value_name << ",@object" << std::endl;\
                                         file_handler << "\t.size\t" << global.value_name << "," << sizeof(double) << std::endl;\
                                         file_handler << global.value_name << ":" << std::endl;\
-                                        file_handler << "\t.double\t" << global.value.value_address << std::endl;\
+                                        file_handler << "\t.quad\t" << global.value.value_address << std::endl;\
                                     }while(0);
 
 #define isGlobalValue(type,size)    do{\
@@ -518,8 +518,9 @@ void BulidObejctCode(const std::string filename){
 
     WriteHeadInfo(assemble_file,filename);
 
-    if(!RunTimeTrans){
+   /* if(!RunTimeTrans){
         WriteReadOnlyData(assemble_file);
         WriteInfo(assemble_file,"main");
-    }
+    }*/
 }
+
