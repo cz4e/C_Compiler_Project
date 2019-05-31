@@ -55,20 +55,73 @@
                                     exit(ErrorCode);\
                                 }while(0);
 
-#define CalculateBytes(_type)   do{\
-                                    if(iter_begin.value_type & pointer_mask){\
-                                        TotalBytes += sizeof(long);\
-                                    }\
-                                    else if(iter_begin.value_type & array_mask){\
-                                        long Count = 1;\
-                                        for(auto dims_ : iter_begin.value.arrayinfo.dims)\
-                                            Count *= dims_;\
-                                        TotalBytes += sizeof(_type) * Count;\
-                                    }\
-                                    else{\
-                                        TotalBytes += sizeof(_type);\
-                                    }\
+#define CalculateBytes(_type,isoffset)   do{\
+                                            long this_scope_bytes = 0;\
+                                            if(isoffset){\
+                                                if(value_offset.count(iter_begin.value_name)){\
+                                                    ;\
+                                                }\
+                                                else{\
+                                                    value_offset.insert(std::pair<std::string,int>(iter_begin.value_name,TotalBytes));\
+                                                }\
+                                            }\
+                                            if(iter_begin.value_type & pointer_mask){\
+                                                if(!isoffset){\
+                                                    TotalBytes += sizeof(long);\
+                                                }\
+                                                else{\
+                                                    this_scope_bytes += sizeof(long);\
+                                                }\
+                                            }\
+                                            else if(iter_begin.value_type & array_mask){\
+                                                long Count = 1;\
+                                                for(auto dims_ : iter_begin.value.arrayinfo.dims){\
+                                                        Count *= dims_;\
+                                                }\
+                                                if(!isoffset){\
+                                                    TotalBytes += sizeof(_type) * Count;\
+                                                }\
+                                                else\
+                                                    this_scope_bytes += sizeof(_type) * Count;\
+                                            }\
+                                            else{\
+                                                if(!isoffset){\
+                                                    TotalBytes += sizeof(_type);\
+                                                }\
+                                                else\
+                                                    this_scope_bytes += sizeof(_type);\
+                                            }\
+                                            if(isoffset){\
+                                                std::cout << this_scope_bytes << std::endl;\
+                                                TotalBytes -= this_scope_bytes;\
+                                            }\
                                 }while(0);
+
+#define CalculatAllBytes(_name,isoffset)      do{\
+                                                for(auto iter_begin:_name[func_info.function_name].value_info){\
+                                                    if(     iter_begin.value_type & char_mask){\
+                                                        CalculateBytes(char,isoffset)\
+                                                    }\
+                                                    else if(iter_begin.value_type & short_mask){\
+                                                        CalculateBytes(short,isoffset)\
+                                                    }\
+                                                    else if(iter_begin.value_type & int_mask){\
+                                                        CalculateBytes(int,isoffset)\
+                                                    }\
+                                                    else if(iter_begin.value_type & long_mask){\
+                                                        CalculateBytes(long,isoffset)\
+                                                    }\
+                                                    else if(iter_begin.value_type & float_mask){\
+                                                        CalculateBytes(float,isoffset)\
+                                                    }\
+                                                    else if(iter_begin.value_type & double_mask){\
+                                                        CalculateBytes(double,isoffset)\
+                                                    }\
+                                                }\
+                                            }while(0);
+
+
+
 std::string alias_name;
 int struct_or_union;
 static void ResetGlobalvalue(void){
@@ -149,34 +202,34 @@ public:
     void Union(void);                               // 枚举
     void Express(void);                             // 表达式
     void Express1(void);                            // 表达式
-    void AssignmentExpress(void);                   // 赋值表达式
-    void AssignmentOperator(void);                  // 赋值擦作符
-    void ConditionExpress(void);                    // 
-    void LogicOrExpress(void);
+    struct Value AssignmentExpress(void);                   // 赋值表达式
+    int AssignmentOperator(void);                  // 赋值擦作符
+    struct Value ConditionExpress(void);                    // 
+    struct Value LogicOrExpress(void);
     void LogicOrExpress1(void);
-    void LogicAndExpress(void);
+    struct Value LogicAndExpress(void);
     void LogicAndExpress1(void);
-    void BitOrExpress(void);
+    struct Value BitOrExpress(void);
     void BitOrExpress1(void);
-    void BitXorExpress(void);
+    struct Value BitXorExpress(void);
     void BitXorExpress1(void);
-    void BitAndExpress(void);
+    struct Value BitAndExpress(void);
     void BitAndExpress1(void);
-    void EqualClassExpress(void);
+    struct Value EqualClassExpress(void);
     void EqualClassExpress1(void);
-    void RelationExpress(void);
+    struct Value RelationExpress(void);
     void RelationExpress1(void);
-    void ShiftExpress(void);
+    struct Value ShiftExpress(void);
     void ShiftExpress1(void);
-    void AddClassExpress(void);
+    struct Value AddClassExpress(void);
     void AddClassExpress1(void);
-    void MulClassExpress(void);
+    struct Value MulClassExpress(void);
     void MulClassExpress1(void);
-    void ForceTranExpress(void);
-    void UnaryExpress(void);
-    void PostfixExpress(void);
+    struct Value ForceTranExpress(void);
+    struct Value UnaryExpress(void);
+    struct Value PostfixExpress(void);
     void PostfixExpress1(void);
-    void PrimaryExpress(void);
+    struct Value PrimaryExpress(void);
     void ArgumentExpress(void);
     void ArgumentExpress1(void);
     void ControlInstruction(void);
@@ -403,6 +456,86 @@ void SyntaxAnalyzer::StatementID(void){
     return;
 }
 
+static void Initial(long offset,std::string _value_name){
+    for(auto iter:Anonymous_domain[func_info.function_name].value_info){
+        if(iter.value_name == _value_name)
+        {
+            if(iter.value_type & char_mask){
+                ;
+            }
+            else if(iter.value_type & short_mask){
+                ;
+            }
+            else if(iter.value_type & int_mask){
+                ;
+            }
+            else if(iter.value_type & long_mask){
+                if(iter.value_type & array_mask){
+                    ;
+                }
+                else if(iter.value_type & pointer_mask){
+                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
+                                    <<  offset << "(%rbp)" << std::endl;
+                                    return;
+                }
+                else{
+                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
+                                    <<  offset << "(%rbp)" << std::endl;
+                                    return ;
+                }
+            }
+            else if(iter.value_type & float_mask){
+                ;
+            }
+            else if(iter.value_type & double_mask){
+                ;
+            }
+        }
+    }
+    for(auto iter:localvalue[func_info.function_name].value_info){
+        if(iter.value_name == _value_name)
+        {
+            if(iter.value_type & char_mask){
+                ;
+            }
+            else if(iter.value_type & short_mask){
+                ;
+            }
+            else if(iter.value_type & int_mask){
+                ;
+            }
+            else if(iter.value_type & long_mask){
+                if(iter.value_type & array_mask){
+                    ;
+                }
+                else if(iter.value_type & pointer_mask){
+                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
+                                    <<  offset << "(%rbp)" << std::endl;
+                                    return;
+                }
+                else{
+                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
+                                    <<  offset << "(%rbp)" << std::endl;
+                                    return ;
+                }
+            }
+            else if(iter.value_type & float_mask){
+                ;
+            }
+            else if(iter.value_type & double_mask){
+                ;
+            }
+        }
+    }
+    return;
+}
+
+static void InitialLocalValue(void){
+    for(auto iter:value_offset){
+        Initial(value_offset[iter.first],iter.first);
+    }
+}
+
 void SyntaxAnalyzer::StatementFunction(void){
 #if defined(syntaxanalyzer)
     std::cout << "StatementFunction-> function(ArgumentList)(;|{Statement}) " << std::endl;
@@ -429,26 +562,9 @@ void SyntaxAnalyzer::StatementFunction(void){
         FunctionRegion = true;
         GlobalScopeValue = false;
         long TotalBytes = AMD64_SIZE;
-        for(auto iter_begin:localvalue[func_info.function_name].value_info){
-            if(     iter_begin.value_type & char_mask){
-                CalculateBytes(char)
-            }
-            else if(iter_begin.value_type & short_mask){
-                CalculateBytes(short)
-            }
-            else if(iter_begin.value_type & int_mask){
-                CalculateBytes(int)
-            }
-            else if(iter_begin.value_type & long_mask){
-                CalculateBytes(long)
-            }
-            else if(iter_begin.value_type & float_mask){
-                CalculateBytes(float)
-            }
-            else if(iter_begin.value_type & double_mask){
-                CalculateBytes(double)
-            }
-        }
+        CalculatAllBytes(localvalue,false)
+        CalculatAllBytes(Anonymous_domain,false)
+
         if(RunTimeTrans){
             while(TotalBytes % 8 || TotalBytes % 16) TotalBytes++;
             assemble_file << "\tsubq    $" <<   TotalBytes  <<  ",%rsp" << std::endl;
@@ -456,6 +572,10 @@ void SyntaxAnalyzer::StatementFunction(void){
             assemble_file << "\tmovq    %rax,-8(%rbp)" << std::endl;
             assemble_file << "\txorl    \%eax,\%eax"  << std::endl;
         }
+
+        CalculatAllBytes(localvalue,true)
+        CalculatAllBytes(Anonymous_domain,true)
+        InitialLocalValue();
         CompoundSentence();
         FunctionRegion = false;
         GlobalScopeValue = false;
@@ -681,21 +801,25 @@ void SyntaxAnalyzer::Statement(void){
 #endif
         bool StoreStatus;
         bool StoreGlobalStatus ;
-        if(InAnonymousDomain == 0){
-            InAnonymousDomain++;
-            domain_number++;
-            StoreStatus = FunctionRegion;
-            StoreGlobalStatus = GlobalScopeValue;
+        if(FunctionRegion){
+            if(InAnonymousDomain == 0){
+                InAnonymousDomain++;
+                domain_number++;
+                StoreStatus = FunctionRegion;
+                StoreGlobalStatus = GlobalScopeValue;
+            }
+            GlobalScopeValue = false;
+            FunctionRegion = false;
+            CompoundSentence();
+            if(InAnonymousDomain != 0){
+                InAnonymousDomain--;
+                FunctionRegion = StoreStatus;
+                GlobalScopeValue = StoreGlobalStatus;
+            }
         }
-        GlobalScopeValue = false;
-        FunctionRegion = false;
-
-        CompoundSentence();
-
-        if(InAnonymousDomain != 0){
-            InAnonymousDomain--;
-            FunctionRegion = StoreStatus;
-            GlobalScopeValue = StoreGlobalStatus;
+        else{
+            std::cout << "Line: " << LineNumber  << "  "<< std::flush;
+            Error("Expect a ) before {",1)
         }
     }
     else if(isControlInstruction(CurrentTokenType)){
@@ -1016,13 +1140,13 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
                 std::cout << valueinfo.value_name << std::endl;
                 anonymous_domain_value.value_info.push_back(valueinfo);
                 Anonymous_domain.insert(std::pair<int,struct LocalValue>(domain_number,anonymous_domain_value));*/
-                if(Anonymous_domain.count(domain_number)){
-                    Anonymous_domain[domain_number].value_info.push_back(valueinfo);
+                if(Anonymous_domain.count(func_info.function_name)){
+                    Anonymous_domain[func_info.function_name].value_info.push_back(valueinfo);
                 }
                 else{
                     anonymous_domain_value.function_name = "";
                     anonymous_domain_value.value_info.push_back(valueinfo);
-                    Anonymous_domain.insert(std::pair<int,struct LocalValue>(domain_number,anonymous_domain_value));
+                    Anonymous_domain.insert(std::pair<std::string,struct LocalValue>(func_info.function_name,anonymous_domain_value));
                 }
             }
 
@@ -1390,116 +1514,191 @@ static bool isUnaryExpress(int tokentype){
             return false;       
     }
 }
-void SyntaxAnalyzer::AssignmentExpress(void){
-    if(isUnaryExpress(CurrentTokenType)){
+
+static bool isaRegister(std::string value_name){
+    if(RegisterBitMap.count(value_name)){
+        return true;
+    }
+    return false;
+}
+
+static bool  _isConstExpress(std::string value_name){
+    for(auto iter:Anonymous_domain[func_info.function_name].value_info){
+        if(iter.value_name == value_name)
+            return true;
+    }
+    for(auto iter:localvalue[func_info.function_name].value_info){
+        if(iter.value_name == value_name)
+            return true;
+    }
+    for(auto iter_begin:GlobalValue){
+        if(iter_begin.value_name == value_name){
+                return true;
+        }
+    }
+    return false;
+}
+
+
+static std::string address(std::string value_name){
+    int boolvalue = 0;
+    for(auto iter:Anonymous_domain[func_info.function_name].value_info)
+        if(iter.value_name == value_name){
+            boolvalue++;
+            break;
+        }
+    
+    for(auto iter:localvalue[func_info.function_name].value_info)
+        if(iter.value_name == value_name){
+            boolvalue++;
+            break;
+        }
+
+    if(boolvalue){
+        std::string offset = std::to_string(value_offset[value_name]);
+        
+        return "-" + offset + "(%rbp)";
+    }
+    else{
+        std::string offset ;
+        /*
+            Process global value
+        */
+        return offset;
+    }
+}
+bool isAssignement = true;
+struct Value  SyntaxAnalyzer::AssignmentExpress(void){
+    if(isUnaryExpress(CurrentTokenType) && isAssignement){
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentExpress-> UnaryExpress AssignmentOperator AssignmentExpress" << std::endl;
 #endif
-        UnaryExpress();
-        AssignmentOperator();
-        AssignmentExpress();
+        struct Value LeftValue;
+        struct Value RightValue;
+        LeftValue = UnaryExpress();
+        int OperatoerType = AssignmentOperator();
+        isAssignement = false;
+        RightValue = AssignmentExpress();
+        std::cout << LeftValue.value_name << std::endl;
+        std::cout << RightValue.value_type << std::endl;
+        if(RunTimeTrans){
+                switch(OperatoerType){
+                    case SYN_SET:
+                    if(LeftValue.value_type == SYN_NUMBER_LONG && RightValue.value_type == SYN_NUMBER_LONG){
+                        if(isaRegister(RightValue.value_name)){
+                            ;
+                        }
+                        else if(!_isConstExpress(RightValue.value_name)){
+                            std::string AddressRef = address(LeftValue.value_name);
+                            assemble_file << "\tmovq\t$" << RightValue.value_integer << "," << AddressRef << std::endl;
+                        }
+                    } 
+                }
+        }
+
+        return LeftValue;
     }
     else {
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentExpress-> ConditionExpress" << std::endl;
 #endif
-        ConditionExpress();
+        isAssignement = true;
+        return  ConditionExpress();
     }
-    return;
 }
 
-void SyntaxAnalyzer::AssignmentOperator(void){
+int SyntaxAnalyzer::AssignmentOperator(void){
     switch(CurrentTokenType){
         case SYN_SET:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> = " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
-
+        return SYN_SET;
         case SYN_ME:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator->  *= " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_ME;
         case SYN_DE:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> /= " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_DE;
         case SYN_MODEQ:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> %= " << std::endl;
 #endif
+        Match(SYN_MODEQ);
+        return SYN_MODEQ;
         case SYN_AE:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> += " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_AE;
         case SYN_SE:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> -= " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_SE;
         case SYN_BIT_SHLEQ:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> <<= " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_BIT_SHLEQ;
         case SYN_BIT_SHREQ:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> >>= " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_BIT_SHREQ;
         case SYN_BIT_ANDEQ:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator->  &= " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_BIT_ANDEQ;
         case SYN_BIT_XOREQ:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> ^= " << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
+        return SYN_BIT_XOREQ;
         case SYN_BIT_OREQ:
 #if defined(syntaxanalyzer)
     std::cout << "AssignmentOperator-> |=" << std::endl;
 #endif
         Match(getTokenCoding());
-        break;
-        default:
-            return;
+        return SYN_BIT_OREQ;
     }
 }
-void SyntaxAnalyzer::ConditionExpress(void){
+
+struct Value SyntaxAnalyzer::ConditionExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "ConditionExpres-> LogicOrExpress [ ? Express:ConditionExpress]" << std::endl;
 #endif
-    LogicOrExpress();
+    struct Value logic_or_value = LogicOrExpress();
     if(CurrentTokenType == SYN_QUES){
         Match(SYN_QUES);
         Express();
         Match(SYN_COLON);
         ConditionExpress();
     }
-    return;
+    return logic_or_value;
 }
 
-void SyntaxAnalyzer::LogicOrExpress(void){
+struct Value SyntaxAnalyzer::LogicOrExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "LogicOrExpress-> LogicAndExpress LogicOrExpress1" << std::endl;
 #endif
-    LogicAndExpress();
+    struct Value logic_and_value =  LogicAndExpress();
     LogicOrExpress1();
-    return;
+    return logic_and_value;
 }
 
 void SyntaxAnalyzer::LogicOrExpress1(void){
@@ -1520,13 +1719,13 @@ void SyntaxAnalyzer::LogicOrExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::LogicAndExpress(void){
+struct Value SyntaxAnalyzer::LogicAndExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "LogicAndExpress-> BitOrExpress LogicAndExpress1" << std::endl;
 #endif
-    BitOrExpress();
+    struct Value bit_or_value = BitOrExpress();
     LogicAndExpress1();
-    return;
+    return bit_or_value;
 }
 
 void SyntaxAnalyzer::LogicAndExpress1(void){
@@ -1547,12 +1746,13 @@ void SyntaxAnalyzer::LogicAndExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::BitOrExpress(void){
+struct Value SyntaxAnalyzer::BitOrExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "BitOrExpress->BitXorExpress BitOrExpress1" << std::endl;
 #endif
-    BitXorExpress();
+    struct Value bit_xor_value = BitXorExpress();
     BitOrExpress1();
+    return bit_xor_value;
 }
 
 void SyntaxAnalyzer::BitOrExpress1(void){
@@ -1573,12 +1773,13 @@ void SyntaxAnalyzer::BitOrExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::BitXorExpress(void){
+struct Value SyntaxAnalyzer::BitXorExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "BitXorExpress-> BitAndExpress BitXorExpress1" << std::endl;
 #endif
-    BitAndExpress();
+    struct Value bit_and_value = BitAndExpress();
     BitXorExpress1();
+    return bit_and_value;
 }
 
 void SyntaxAnalyzer::BitXorExpress1(void){
@@ -1600,12 +1801,13 @@ void SyntaxAnalyzer::BitXorExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::BitAndExpress(void){
+struct Value SyntaxAnalyzer::BitAndExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "BitAndExpress-> EqualClassExpress BitAndExpress1" << std::endl;
 #endif
-    EqualClassExpress();
+    struct Value equal_class_value = EqualClassExpress();
     BitAndExpress1();
+    return equal_class_value;
 }
 
 void SyntaxAnalyzer::BitAndExpress1(void){
@@ -1626,12 +1828,13 @@ void SyntaxAnalyzer::BitAndExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::EqualClassExpress(void){
+struct Value SyntaxAnalyzer::EqualClassExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "EqualClassExpress-> RelationExpress EqualClassExpress1" << std::endl;
 #endif  
-    RelationExpress();
+    struct Value relation_value = RelationExpress();
     EqualClassExpress1();
+    return relation_value;
 }
 
 void SyntaxAnalyzer::EqualClassExpress1(void){
@@ -1652,12 +1855,13 @@ void SyntaxAnalyzer::EqualClassExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::RelationExpress(void){
+struct Value SyntaxAnalyzer::RelationExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "RelationExpress-> ShiftExpress RelationExpress1" << std::endl;
 #endif  
-    ShiftExpress();
+    struct Value shift_value = ShiftExpress();
     RelationExpress1();
+    return shift_value;
 }
 
 void SyntaxAnalyzer::RelationExpress1(void){
@@ -1678,12 +1882,13 @@ void SyntaxAnalyzer::RelationExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::ShiftExpress(void){
+struct Value  SyntaxAnalyzer::ShiftExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "ShiftExpress-> AddClassExpress ShiftExpress" << std::endl;
 #endif
-    AddClassExpress();
+    struct Value add_class_value = AddClassExpress();
     ShiftExpress1();
+    return add_class_value;
 }
 
 void SyntaxAnalyzer::ShiftExpress1(void){
@@ -1704,12 +1909,13 @@ void SyntaxAnalyzer::ShiftExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::AddClassExpress(void){
+struct Value SyntaxAnalyzer::AddClassExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "AddClassExpress-> MulClassExpress AddClassExpress1" << std::endl;
 #endif
-    MulClassExpress();
+    struct Value mul_class_value = MulClassExpress();
     AddClassExpress1();
+    return mul_class_value;
 }
 
 void SyntaxAnalyzer::AddClassExpress1(void){
@@ -1730,12 +1936,13 @@ void SyntaxAnalyzer::AddClassExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::MulClassExpress(void){
+struct Value SyntaxAnalyzer::MulClassExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "MulClassExpress-> ForeceTranExpress MulClassExpress1" << std::endl;
 #endif
-    ForceTranExpress();
+    struct Value force_value = ForceTranExpress();
     MulClassExpress1();
+    return force_value;
 }
 
 void SyntaxAnalyzer::MulClassExpress1(void){
@@ -1762,7 +1969,7 @@ void SyntaxAnalyzer::MulClassExpress1(void){
     return;
 }
 
-void SyntaxAnalyzer::ForceTranExpress(void){
+struct Value SyntaxAnalyzer::ForceTranExpress(void){
     if(CurrentTokenType == SYN_PAREN_L){
 #if defined(syntaxanalyzer)
     std::cout << "ForceTranExpress-> (Type) ForceTranExpress" << std::endl;
@@ -1780,9 +1987,9 @@ void SyntaxAnalyzer::ForceTranExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "ForceTranExpress-> UnaryExpress" << std::endl;
 #endif
-        UnaryExpress();
+        struct Value unary_value = UnaryExpress();
+        return unary_value;
     }
-    return;
 }
 
 static bool isUnaryOperator(int tokentype){
@@ -1882,7 +2089,7 @@ void SyntaxAnalyzer::Args(void){
             }
 }
 
-void SyntaxAnalyzer::UnaryExpress(void){
+struct Value SyntaxAnalyzer::UnaryExpress(void){
     if(CurrentTokenType == SYN_INC || CurrentTokenType == SYN_DEC){
 #if defined(syntaxanalyzer)
     std::cout << "UnaryExpress-> (++|--) UnaryExpress" << std::endl;
@@ -1931,14 +2138,14 @@ void SyntaxAnalyzer::UnaryExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "UnaryExpress-> PostfixExpress" << std::endl;
 #endif
-        PostfixExpress();
+        return PostfixExpress();
     }
-    return;
 }
 
-void SyntaxAnalyzer::PostfixExpress(void){
-    PrimaryExpress();
+struct Value SyntaxAnalyzer::PostfixExpress(void){
+    struct Value post_value = PrimaryExpress();
     PostfixExpress1();
+    return post_value;
 }
 
 void SyntaxAnalyzer::PostfixExpress1(void){
@@ -2000,11 +2207,11 @@ void SyntaxAnalyzer::PostfixExpress1(void){
 #if defined(syntaxanalyzer)
     std::cout << "PostfixExpress1->" << std::endl;
 #endif  
-        return;
+        return ;
     }
 }
 
-void SyntaxAnalyzer::PrimaryExpress(void){
+struct Value SyntaxAnalyzer::PrimaryExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "PrimaryExpress-> Id | ConstExpress | (Express)" << std::endl;
 #endif
@@ -2012,32 +2219,51 @@ void SyntaxAnalyzer::PrimaryExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "id-> " << token.tokenValue.StringValue << std::endl;
 #endif
+        struct Value value_;
+        value_.value_name = token.tokenValue.StringValue;
+        value_.value_type = SYN_NUMBER_LONG;
         Match(SYN_KEYWORD);
+        return value_;
     }
     else if(CurrentTokenType == SYN_NUMBER_DOUBLE){
 #if defined(syntaxanalyzer)
     std::cout << "ConstExpress-> " << token.tokenValue.StringValue << std::endl;
 #endif
+        struct Value value_;
+        value_.value_integer = token.tokenValue.number.realNumber.floatNumber.DoubleNumber;
+        value_.value_name = "";
+        value_.value_type = SYN_NUMBER_DOUBLE;
         Match(SYN_NUMBER_DOUBLE);
+        return value_;
     }
     else if(CurrentTokenType == SYN_NUMBER_LONG){
 #if defined(syntaxanalyzer)
     std::cout << "ConstExpress-> " << token.tokenValue.StringValue << std::endl;
 #endif
+        struct Value value_;
+        value_.value_integer = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
+        value_.value_name = "";
+        value_.value_type = SYN_NUMBER_LONG;
         Match(SYN_NUMBER_LONG);
+        return value_;
     }
     else if(CurrentTokenType == SYN_STRING){
 #if defined(syntaxanalyzer)
     std::cout << "ConstExpress-> " << token.tokenValue.StringValue << std::endl;
 #endif
+        struct Value value_;
+        value_.value_integer = 0;
+        value_.value_name = token.tokenValue.StringValue;
+        value_.value_type = SYN_STRING;
         Match(SYN_STRING);
+        return value_;
     }
     else if(CurrentTokenType == SYN_PAREN_L){
         Match(SYN_PAREN_L);
         Express();
         Match(SYN_PAREN_R);
     }
-    return;
+
 }
 
 void SyntaxAnalyzer::ArgumentExpress(void){
