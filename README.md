@@ -11,4 +11,4 @@ Function Framework
 ![](https://github.com/WuLynLinux/C_Complier_Project/blob/master/images/1.png)
 
 ### Assemble code
-![](https://github.com/WuLynLinux/C_Complier_Project/blob/master/images/2.png)
+![](https://github.com/WuLynLinux/C_Complier_Project/blob/master/images/2.jpg)
