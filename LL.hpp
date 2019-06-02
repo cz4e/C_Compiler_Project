@@ -58,7 +58,7 @@
 #define CalculateBytes(_type,isoffset)   do{\
                                             long this_scope_bytes = 0;\
                                             if(isoffset){\
-                                                if(value_offset.count(iter_begin.value_name)){\
+                                                if(value_offset.find(iter_begin.value_name) != value_offset.end()){\
                                                     ;\
                                                 }\
                                                 else{\
@@ -67,10 +67,10 @@
                                             }\
                                             if(iter_begin.value_type & pointer_mask){\
                                                 if(!isoffset){\
-                                                    TotalBytes += sizeof(long);\
+                                                    TotalBytes += sizeof(_type *);\
                                                 }\
                                                 else{\
-                                                    this_scope_bytes += sizeof(long);\
+                                                    this_scope_bytes += sizeof(_type *);\
                                                 }\
                                             }\
                                             else if(iter_begin.value_type & array_mask){\
@@ -92,7 +92,6 @@
                                                     this_scope_bytes += sizeof(_type);\
                                             }\
                                             if(isoffset){\
-                                                std::cout << this_scope_bytes << std::endl;\
                                                 TotalBytes -= this_scope_bytes;\
                                             }\
                                 }while(0);
@@ -119,6 +118,129 @@
                                                     }\
                                                 }\
                                             }while(0);
+
+
+#define ProcessAssignment(_type,object,offset)  do{\
+                                                if(_type & char_mask){\
+                                                    if(_type & array_mask){\
+                                                        ;\
+                                                    }\
+                                                    else if(_type & pointer_mask){\
+                                                        std::cout << "read_only_offset[object.value.StringValue]" << std::endl;\
+                                                        assemble_file << "\tleaq\t" << read_only_offset[object.value.StringValue] << "(%rip),%rax" << std::endl;\
+                                                        assemble_file << "\tmovq\t" << "%rax," << ",-" << offset << "(%rbp)" << std::endl;\
+                                                                        return;\
+                                                    }\
+                                                    else{\
+                                                        assemble_file << "\tmovq\t$"    <<  object.value.number.realNumber.intgerNumber.LongNumber << ",-" \
+                                                                        <<  offset << "(%rbp)" << std::endl;\
+                                                                        return ;\
+                                                    }\
+                                                }\
+                                                else if(_type & short_mask){\
+                                                    if(_type & array_mask){\
+                                                        ;\
+                                                    }\
+                                                    else if(_type & pointer_mask){\
+                                                        assemble_file << "\tmovw\t$"    <<  object.value.number.realNumber.intgerNumber.LongNumber << ",-" \
+                                                                        <<  offset << "(%rbp)" << std::endl;\
+                                                                        return;\
+                                                    }\
+                                                    else{\
+                                                        assemble_file << "\tmovw\t$"    <<  object.value.number.realNumber.intgerNumber.LongNumber << ",-" \
+                                                                        <<  offset << "(%rbp)" << std::endl;\
+                                                                        return ;\
+                                                    }\
+                                                }\
+                                                else if(_type & int_mask){\
+                                                    if(_type & array_mask){\
+                                                        ;\
+                                                    }\
+                                                    else if(_type & pointer_mask){\
+                                                        assemble_file << "\tmovl\t$"    <<  object.value.number.realNumber.intgerNumber.LongNumber << ",-" \
+                                                                        <<  offset << "(%rbp)" << std::endl;\
+                                                                        return;\
+                                                    }\
+                                                    else{\
+                                                        assemble_file << "\tmovl\t$"    <<  object.value.number.realNumber.intgerNumber.LongNumber << ",-" \
+                                                                        <<  offset << "(%rbp)" << std::endl;\
+                                                                        return ;\
+                                                    }\
+                                                }\
+                                                else if(_type & long_mask){\
+                                                    if(_type & array_mask){\
+                                                        ;\
+                                                    }\
+                                                    else if(_type & pointer_mask){\
+                                                        assemble_file << "\tmovq\t$"    <<  object.value.number.realNumber.intgerNumber.LongNumber << ",-" \
+                                                                        <<  offset << "(%rbp)" << std::endl;\
+                                                                        return;\
+                                                    }\
+                                                    else{\
+                                                        assemble_file << "\tmovq\t$"    <<  object.value.number.realNumber.intgerNumber.LongNumber << ",-" \
+                                                                        <<  offset << "(%rbp)" << std::endl;\
+                                                                        return ;\
+                                                    }\
+                                                }\
+                                                else if(_type & float_mask){\
+                                                    if(_type & array_mask){\
+                                                        ;\
+                                                    }\
+                                                    else if(_type & pointer_mask){\
+                                                        ;\
+                                                    }\
+                                                    else{\
+                                                        std::string label = func_double_label[func_info.function_name][object.value.number.realNumber.floatNumber.DoubleNumber].label;\
+                                                        std::string XmmRegister = WhichXmmFree();\
+                                                        assemble_file << "\tmovss\t" << label << "," << XmmRegister << std::endl;\
+                                                        assemble_file << "\tmovss\t" << XmmRegister << ",-" << offset << "(%rbp)" << std::endl;\
+                                                    }\
+                                                }\
+                                                else if(_type & double_mask){\
+                                                    if(_type & array_mask){;}\
+                                                    else if(_type & pointer_mask){;}\
+                                                    else{\
+                                                        std::string label = func_double_label[func_info.function_name][object.value.number.realNumber.floatNumber.DoubleNumber].label;\
+                                                        label = label+ "(%rip)";\
+                                                        std::string XmmRegister = WhichXmmFree();\
+                                                        assemble_file << "\tmovsd\t" << label << "," << XmmRegister << std::endl;\
+                                                        assemble_file << "\tmovsd\t" << XmmRegister << ",-" << offset << "(%rbp)" << std::endl;\
+                                                    }\
+                                                }\
+                                    }while(0);
+
+
+static std::string WhichXmmFree(void){
+    std::string xmm = "xmm";
+    for(int index = 0;index <=7 ;index++){
+        if(!RegisterBitMap[xmm + std::to_string(index)]){
+            RegisterBitMap[xmm + std::to_string(index)] = true;
+            return "%" + xmm + std::to_string(index);
+        }
+    }
+}
+
+static void Initial(long offset,std::string _value_name){
+    for(auto iter:Anonymous_domain[func_info.function_name].value_info){
+        if(iter.value_name == _value_name)
+        {
+            ProcessAssignment(iter.value_type,iter,offset)
+        }
+    }
+    for(auto iter:localvalue[func_info.function_name].value_info){
+        if(iter.value_name == _value_name)
+        {
+            ProcessAssignment(iter.value_type,iter,offset)
+        }
+    }
+    return;
+}
+
+static void InitialLocalValue(void){
+    for(auto iter:value_offset){
+        Initial(value_offset[iter.first],iter.first);
+    }
+}
 
 
 
@@ -186,7 +308,7 @@ public:
     void LimitTypeSymbol(void);                     // 类型限制符
     void Type(void);                                // 类型
     void IdList(void);                              // Id表
-    void Primary(int tokenvalue);                   // 初始值
+    struct Value Primary(int tokenvalue);                   // 初始值
     void PrimaryList(void);                         // 初始化列表
     void PList(void);                               // 列表
     void Pointer(void);                             // 指针
@@ -407,7 +529,15 @@ void SyntaxAnalyzer::StructOrUnion(void){
     return;
 }
 
+static std::string WhichRegisterFree(void){
+    for(auto iter:GeneralRigisterMap){
+        if(!iter.second){
+            return "%" + iter.first ;
+        }
+    }
+}
 void SyntaxAnalyzer::StatementID(void){
+   // static long array_offset = 0;
     id_name = getTokenString();
     Match(SYN_KEYWORD);
     if(CurrentTokenType == SYN_SET){
@@ -415,10 +545,95 @@ void SyntaxAnalyzer::StatementID(void){
     std::cout << "StatementID-> id[=Primary] IdList;" << std::endl;
 #endif
         Match(SYN_SET);
-        Primary(CurrentTokenType);
+        struct Value value_ = Primary(CurrentTokenType);
         IdList();
         Match(SYN_SEMIC);
-        
+
+        if(RunTimeTrans && FunctionRegion){
+            long offset = value_offset[id_name];
+            if(statement_type & char_mask){
+                if(statement_type & pointer_mask){
+                    assemble_file << "\tleaq\t" << read_only_offset[value_.const_char] << "(%rip),%rax" << std::endl;
+                    assemble_file << "\tmovq\t" << "%rax" << ",-" << offset << "(%rbp)" << std::endl;
+                }
+                else if(statement_type & array_mask){
+                    ;
+                }
+                else{
+                    assemble_file << "\tmovb\t" << "$" << (long)(value_.const_char[1]) << ",-" << offset << "(%rbp)" << std::endl;
+                }
+            }
+            else if(statement_type & short_mask){
+                if(statement_type & array_mask){
+                    ;
+                }
+                else if(statement_type & pointer_mask){
+                    std::string register_ = WhichRegisterFree();
+                    int _offset = value_offset[value_.value_address];
+                    if(_offset){
+                        assemble_file << "\tleaw\t" << "-" << _offset << "(%rbp)" << "," << register_ << std::endl;
+                        assemble_file << "\tmovw\t" << register_ << ",-" << offset << "(%rbp)" << std::endl;
+                    }
+                }
+                else
+                    assemble_file << "\tmovw\t$" << value_.value_integer << ",-" << offset << "(%rbp)" << std::endl;
+            }
+            else if(statement_type & int_mask){
+                                if(statement_type & array_mask){
+                    ;
+                }
+                else if(statement_type & pointer_mask){
+                    std::string register_ = WhichRegisterFree();
+                    int _offset = value_offset[value_.value_address];
+                    if(_offset){
+                        assemble_file << "\tleal\t" << "-" << _offset << "(%rbp)" << "," << register_ << std::endl;
+                        assemble_file << "\tmovl\t" << register_ << ",-" << offset << "(%rbp)" << std::endl;
+                    }
+                }
+                else
+                    assemble_file << "\tmovl\t$" << value_.value_integer << ",-" << offset << "(%rbp)" << std::endl;
+            }
+            else if(statement_type & long_mask){
+                if(statement_type & array_mask){
+                    assemble_file << "\tmovq\t" << "$" << value_.value_integer << ",-" << offset - array_offset << "(%rbp)" << std::endl;
+                    array_offset += sizeof(long);
+                }
+                else if(statement_type & pointer_mask){
+                    std::string register_ = WhichRegisterFree();
+                    int _offset = value_offset[value_.value_address];
+                    if(_offset){
+                        assemble_file << "\tleaq\t" << "-" << _offset << "(%rbp)" << "," << register_ << std::endl;
+                        assemble_file << "\tmovq\t" << register_ << ",-" << offset << "(%rbp)" << std::endl;
+                    }
+                }
+                else
+                    assemble_file << "\tmovq\t$" << value_.value_integer << ",-" << offset << "(%rbp)" << std::endl; 
+            }
+            else if(statement_type & float_mask){
+                if(statement_type & array_mask){;}
+                else if(statement_type & pointer_mask){;}
+                else{
+                    std::string label = func_double_label[func_info.function_name][value_.value_float].label;
+                    label = label+ "(%rip)";
+                    std::string XmmRegister = WhichXmmFree();
+                    
+                    assemble_file << "\tmovss\t" << label << "," << XmmRegister << std::endl;
+                    assemble_file << "\tmovss\t" << XmmRegister << ",-" << offset << "(%rbp)" << std::endl;
+                }
+            }
+            else if(statement_type & double_mask){
+                if(statement_type & array_mask){;}
+                else if(statement_type & pointer_mask){;}
+                else{
+                    std::string label = func_double_label[func_info.function_name][value_.value_float].label;
+                    label = label+ "(%rip)";
+                    std::string XmmRegister = WhichXmmFree();
+                    
+                    assemble_file << "\tmovsd\t" << label << "," << XmmRegister << std::endl;
+                    assemble_file << "\tmovsd\t" << XmmRegister << ",-" << offset << "(%rbp)" << std::endl;
+                }
+            }
+        }
     }
     else if(CurrentTokenType == SYN_COLON){
 #if defined(syntaxanalyzer)
@@ -434,11 +649,16 @@ void SyntaxAnalyzer::StatementID(void){
     std::cout << "StatementArray-> id[ ConstExpress ] Brace[=Primary];" << std::endl;
 #endif
         statement_type |= array_mask;
+        TotalElement = 1;
         id_primary.arrayinfo.Dimension = 1;
         Match(SYN_SQU_BRACE_L);
         id_primary.arrayinfo.dims.push_back(ConstExpress());
         Match(SYN_SQU_BRACE_R);
         Brace();
+        if(RunTimeTrans)
+            for(auto iter: id_primary.arrayinfo.dims){
+                TotalElement *= iter;
+            }
         if(CurrentTokenType == SYN_SET){
             Match(SYN_SET);
             Primary(CurrentTokenType);
@@ -447,6 +667,7 @@ void SyntaxAnalyzer::StatementID(void){
                 ResetAlias();
             }
         }
+        FirstBlock = true;
         Match(SYN_SEMIC);
     }
     else{
@@ -456,85 +677,7 @@ void SyntaxAnalyzer::StatementID(void){
     return;
 }
 
-static void Initial(long offset,std::string _value_name){
-    for(auto iter:Anonymous_domain[func_info.function_name].value_info){
-        if(iter.value_name == _value_name)
-        {
-            if(iter.value_type & char_mask){
-                ;
-            }
-            else if(iter.value_type & short_mask){
-                ;
-            }
-            else if(iter.value_type & int_mask){
-                ;
-            }
-            else if(iter.value_type & long_mask){
-                if(iter.value_type & array_mask){
-                    ;
-                }
-                else if(iter.value_type & pointer_mask){
-                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
-                                    <<  offset << "(%rbp)" << std::endl;
-                                    return;
-                }
-                else{
-                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
-                                    <<  offset << "(%rbp)" << std::endl;
-                                    return ;
-                }
-            }
-            else if(iter.value_type & float_mask){
-                ;
-            }
-            else if(iter.value_type & double_mask){
-                ;
-            }
-        }
-    }
-    for(auto iter:localvalue[func_info.function_name].value_info){
-        if(iter.value_name == _value_name)
-        {
-            if(iter.value_type & char_mask){
-                ;
-            }
-            else if(iter.value_type & short_mask){
-                ;
-            }
-            else if(iter.value_type & int_mask){
-                ;
-            }
-            else if(iter.value_type & long_mask){
-                if(iter.value_type & array_mask){
-                    ;
-                }
-                else if(iter.value_type & pointer_mask){
-                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
-                                    <<  offset << "(%rbp)" << std::endl;
-                                    return;
-                }
-                else{
-                    assemble_file << "\tmovq\t$"<<iter.value.number.realNumber.intgerNumber.LongNumber << ",-" 
-                                    <<  offset << "(%rbp)" << std::endl;
-                                    return ;
-                }
-            }
-            else if(iter.value_type & float_mask){
-                ;
-            }
-            else if(iter.value_type & double_mask){
-                ;
-            }
-        }
-    }
-    return;
-}
 
-static void InitialLocalValue(void){
-    for(auto iter:value_offset){
-        Initial(value_offset[iter.first],iter.first);
-    }
-}
 
 void SyntaxAnalyzer::StatementFunction(void){
 #if defined(syntaxanalyzer)
@@ -575,10 +718,11 @@ void SyntaxAnalyzer::StatementFunction(void){
 
         CalculatAllBytes(localvalue,true)
         CalculatAllBytes(Anonymous_domain,true)
-        InitialLocalValue();
+        //InitialLocalValue();
         CompoundSentence();
         FunctionRegion = false;
         GlobalScopeValue = false;
+        
 
         /* Function Block */
         if(RunTimeTrans){
@@ -593,6 +737,15 @@ void SyntaxAnalyzer::StatementFunction(void){
             }*/
             assemble_file << "\tret" << std::endl;
             assemble_file << "\t.size\t" << func_info.function_name << ",.-" << func_info.function_name << std::endl;
+            assemble_file << "\t.section\t.rodata" << std::endl;
+            for(auto iter:func_double_label[func_info.function_name]){
+                assemble_file << iter.second.label<< ":" << std::endl;
+                if(iter.second.type & double_mask)
+                    assemble_file << "\t.double\t" << iter.first << std::endl;
+                else{
+                    assemble_file << "\t.float\t" << iter.first << std::endl;
+                }
+            }
         }
     }
     ResetFuncDefine();
@@ -957,32 +1110,76 @@ void SyntaxAnalyzer::Type(void){
     return;
 }
 
+static long NextDims(void){
+    static long Index = 0;
+    auto dims = id_primary.arrayinfo.dims[Index];
+    std::cout << "nextdism" << " :" << dims << std::endl;
+    Index++;
+    return dims;
+}
 
-void SyntaxAnalyzer::Primary(int tokenvalue){
+struct Value SyntaxAnalyzer::Primary(int tokenvalue){
     bool InString = false;
     valueinfo.isSetValue = true;
+    struct Value value_;
+
     switch(tokenvalue){
         case SYN_NUMBER_DOUBLE:
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> double_num "<< token.tokenValue.StringValue << std::endl;
 #endif
-            statement_type |= double_mask;
+           
+            //statement_type |= double_mask;
             id_primary.number.realNumber.floatNumber.DoubleNumber = token.tokenValue.number.realNumber.floatNumber.DoubleNumber;
+            if(RunTimeTrans){
+                if(FunctionRegion){
+                    func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].label = "floatnumber_" + std::to_string(double_label_counter);
+                    func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].type = statement_type;
+                    double_label_counter++;
+                }
+            }
+            value_.value_float = token.tokenValue.number.realNumber.floatNumber.DoubleNumber;
+            value_.value_name = "";
+            value_.value_type = statement_type;
             Match(SYN_NUMBER_DOUBLE);
-            return;
+            return value_;
         case SYN_NUMBER_LONG:
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> long_num " << token.tokenValue.StringValue << " " << token.TokenType << std::endl;
 #endif
             statement_type |= long_mask;
             id_primary.number.realNumber.intgerNumber.LongNumber = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
+            if(RunTimeTrans){
+                value_.value_integer = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
+                value_.value_name = "";
+                value_.value_type = statement_type;
+                if(RunTimeTrans){
+                    long offset = value_offset[id_name];
+                    if(statement_type & short_mask){;}
+                    else if(statement_type & int_mask){;}
+                    else if(statement_type & long_mask){
+                        if(statement_type & array_mask){
+                            if(statement_type & pointer_mask){
+                                ;
+                            }
+                            else {
+                                assemble_file << "\tmovq\t" << "$" << value_.value_integer << ",-" << offset - array_offset << "(%rbp)" << std::endl;
+                                array_offset += sizeof(long);
+                            }
+                        }
+                    }
+                    else if(statement_type & float_mask){;}
+                    else if(statement_type & double_mask){;}
+                }
+            }
             Match(SYN_NUMBER_LONG);
-            return;
+            return value_;
         case SYN_STRING:
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> string"<< token.tokenValue.StringValue  << std::endl;
 #endif
             statement_type |= string_mask;
+            statement_type |= char_mask;
             for(auto _char:getTokenString()){
                 if(_char == '\''){
                     if(InString){
@@ -1000,15 +1197,34 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
                 ReadOnlyData["string"].push_back(getTokenString());
             }
             id_primary.StringValue = token.tokenValue.StringValue;
+            if(RunTimeTrans){
+                value_.value_type = statement_type;
+                value_.value_name = "";
+                value_.const_char = token.tokenValue.StringValue;
+            }
+            if(RunTimeTrans){
+                if(statement_type & char_mask){
+                    long offset = value_offset[id_name];
+                    if(statement_type & array_mask){
+                        if(statement_type & pointer_mask){
+                            ;
+                        }
+                        else {
+                                assemble_file << "\tmovb\t" << "$" << (long) (value_.const_char[1]) << "," << offset - array_offset << "(%rbp)" << std::endl;
+                                array_offset += sizeof(char);
+                        }
+                    }
+                }
+            }
             Match(SYN_STRING);
-            return;
+            return value_;
         case SYN_KEYWORD:
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> id "<< token.tokenValue.StringValue << std::endl;
 #endif
             CopyToNewId(getTokenString(),id_primary);
             Match(SYN_KEYWORD);
-            return;
+            return value_;
         case SYN_FUNCTION:
             Match(SYN_FUNCTION);
             Match(SYN_PAREN_L);
@@ -1017,23 +1233,46 @@ void SyntaxAnalyzer::Primary(int tokenvalue){
             /*if(CurrentTokenType == SYN_SEMIC){
                 Match(SYN_SEMIC);
             }*/
-            return;
+            return value_;
         case SYN_BRACE_L:
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> {PrimaryList [,]}" << std::endl;
 #endif
             Match(SYN_BRACE_L);
+            if(RunTimeTrans && FirstBlock){
+                FirstBlock = false;
+                array_offset = 0;
+                long offset = value_offset[id_name];
+                assemble_file << "\tleaq\t" << "-" << offset << "(%rbp)" << ",%rdx" << std::endl;
+                if(statement_type & char_mask)
+                    assemble_file << "\tmovl\t$" << TotalElement / 8 << ",\%ecx" << std::endl;
+                else if(statement_type & short_mask){
+                    assemble_file << "\tmovl\t$" << TotalElement / 4 << ",\%ecx" << std::endl;
+                }
+                else if(statement_type & int_mask){
+                    assemble_file << "\tmovl\t$" << TotalElement / 2 << ",\%ecx" << std::endl;
+                }
+                else if(statement_type & long_mask)
+                    assemble_file << "\tmovl\t$" << TotalElement << ",\%ecx" << std::endl;
+                if(!RegisterBitMap["eax"])
+                    assemble_file << "\txorl\t\%eax,\%eax" << std::endl;
+                assemble_file << "\tmovq\t%rdx,%rdi" << std::endl;
+                assemble_file << "\trep stosq" << std::endl;
+            }
+
             PrimaryList();
             if(CurrentTokenType == SYN_COMMA){
                 Match(SYN_COMMA);
             }
             Match(SYN_BRACE_R);
-            return;
+            return value_;
         case SYN_BIT_AND:
             Match(SYN_BIT_AND);
             address_value = getTokenString();
+            value_.Type = 2;
+            value_.value_address = address_value;
             Match(SYN_KEYWORD);
-            return;
+            return value_;
     }
 }
 
@@ -1136,10 +1375,6 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
                 }
             }
             else if(InAnonymousDomain){
-                /*anonymous_domain_value.function_name = "";
-                std::cout << valueinfo.value_name << std::endl;
-                anonymous_domain_value.value_info.push_back(valueinfo);
-                Anonymous_domain.insert(std::pair<int,struct LocalValue>(domain_number,anonymous_domain_value));*/
                 if(Anonymous_domain.count(func_info.function_name)){
                     Anonymous_domain[func_info.function_name].value_info.push_back(valueinfo);
                 }
@@ -1343,15 +1578,20 @@ long SyntaxAnalyzer::ConstExpress(void){
     std::cout << "ConstExpress-> Num_long" << std::endl;
 #endif
             number_value = std::stol(getTokenString().c_str()); 
-           // ReadOnlyData["long"].push_back(getTokenString());
             Match(SYN_NUMBER_LONG);
             return number_value;
         case SYN_NUMBER_DOUBLE:
 #if defined(syntaxanalyzer)
     std::cout << "ConstExpress-> Num_double" << std::endl;
 #endif
+            ReadOnlyData["double"].push_back(getTokenString());
+            if(!RunTimeTrans)           
+                if(FunctionRegion){
+                    func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].label = "floatnumber_" + std::to_string(double_label_counter);
+                    func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].type = double_mask;
+                    double_label_counter++;
+                }
             Match(SYN_NUMBER_DOUBLE);
-           // ReadOnlyData["double"].push_back(getTokenString());
             return 0;
         case SYN_STRING:
 #if defined(syntaxanalyzer)
@@ -1363,7 +1603,7 @@ long SyntaxAnalyzer::ConstExpress(void){
 #if defined(syntaxanalyzer)
     std::cout << "ConstExpress-> id" << std::endl;
 #endif
-            /* Check value Table */
+
             Match(SYN_KEYWORD);
             return 0;
         case SYN_FUNCTION:
@@ -1579,18 +1819,30 @@ struct Value  SyntaxAnalyzer::AssignmentExpress(void){
         int OperatoerType = AssignmentOperator();
         isAssignement = false;
         RightValue = AssignmentExpress();
-        std::cout << LeftValue.value_name << std::endl;
-        std::cout << RightValue.value_type << std::endl;
         if(RunTimeTrans){
+
                 switch(OperatoerType){
                     case SYN_SET:
-                    if(LeftValue.value_type == SYN_NUMBER_LONG && RightValue.value_type == SYN_NUMBER_LONG){
+                    if(LeftValue.value_type & long_mask && RightValue.value_type & long_mask){
                         if(isaRegister(RightValue.value_name)){
                             ;
                         }
                         else if(!_isConstExpress(RightValue.value_name)){
                             std::string AddressRef = address(LeftValue.value_name);
                             assemble_file << "\tmovq\t$" << RightValue.value_integer << "," << AddressRef << std::endl;
+                        }
+                    }
+                    else if((LeftValue.value_type & double_mask) && (RightValue.value_type & double_mask)){
+                        
+                        if(isaRegister(RightValue.value_name)){
+                            ;
+                        }
+                        else if(!_isConstExpress(RightValue.value_name)){
+                            std::string label = func_double_label[func_info.function_name][RightValue.value_float].label;
+                            label = label+ "(%rip)";
+                            std::string AddressRef = WhichXmmFree();
+                            assemble_file << "\tmovsd\t" << label << "," << AddressRef << std::endl;
+                            assemble_file << "\tmovsd\t" << AddressRef << "," << address(LeftValue.value_name) << std::endl;
                         }
                     } 
                 }
@@ -2221,8 +2473,27 @@ struct Value SyntaxAnalyzer::PrimaryExpress(void){
 #endif
         struct Value value_;
         value_.value_name = token.tokenValue.StringValue;
-        value_.value_type = SYN_NUMBER_LONG;
         Match(SYN_KEYWORD);
+        if(RunTimeTrans){
+            for(auto iter:Anonymous_domain[func_info.function_name].value_info){
+                if(iter.value_name == value_.value_name){
+                    value_.value_type = iter.value_type;
+                    return value_;
+                }
+            }
+            for(auto iter:localvalue[func_info.function_name].value_info){
+                if(iter.value_name == value_.value_name){
+                    value_.value_type = iter.value_type;
+                    return value_;
+                }
+            }
+            for(auto iter:GlobalValue){
+                if(iter.value_name == value_.value_name){
+                    value_.value_type = iter.value_type;
+                    return value_;
+                }
+            }
+        }
         return value_;
     }
     else if(CurrentTokenType == SYN_NUMBER_DOUBLE){
@@ -2230,9 +2501,16 @@ struct Value SyntaxAnalyzer::PrimaryExpress(void){
     std::cout << "ConstExpress-> " << token.tokenValue.StringValue << std::endl;
 #endif
         struct Value value_;
-        value_.value_integer = token.tokenValue.number.realNumber.floatNumber.DoubleNumber;
-        value_.value_name = "";
-        value_.value_type = SYN_NUMBER_DOUBLE;
+        if(RunTimeTrans){
+            value_.value_float = token.tokenValue.number.realNumber.floatNumber.DoubleNumber;
+            value_.value_name = "";
+            value_.value_type |= double_mask;
+            if(FunctionRegion){
+                func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].label = "floatnumber_" + std::to_string(double_label_counter);
+                func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].type = double_mask;
+                double_label_counter++;
+            }
+        }
         Match(SYN_NUMBER_DOUBLE);
         return value_;
     }
@@ -2243,7 +2521,7 @@ struct Value SyntaxAnalyzer::PrimaryExpress(void){
         struct Value value_;
         value_.value_integer = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
         value_.value_name = "";
-        value_.value_type = SYN_NUMBER_LONG;
+        value_.value_type |= long_mask;
         Match(SYN_NUMBER_LONG);
         return value_;
     }

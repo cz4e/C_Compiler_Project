@@ -333,8 +333,14 @@ int domain_number = 0;
 int InAnonymousDomain = 0;
 
 std::map<std::string /* value_name*/ ,int /* offset */> value_offset;
+std::map<std::string,std::string> read_only_offset;
 std::map<std::string,bool> RegisterBitMap = {
     {"rax",false},{"rbx",false},{"rcx",false},{"rdx",false},{"rsi",false},{"rdi",false},
+    {"xmm0",false},{"xmm1",false},{"xmm2",false},{"xmm3",false},{"xmm4",false},{"xmm5",false},{"xmm6",false},{"xmm7",false},
+};
+
+std::map<std::string,bool> GeneralRigisterMap ={
+    {"rax",false},{"rbx",false},{"rcx",false},{"rdx",false},{"rsi",false},{"rdi",false},  
 };
 
 bool BuildCode = false;
@@ -345,6 +351,17 @@ struct Value{
     long value_integer;
     double value_float;
     std::string const_char;
+    std::string value_address;
+    int Type; /* 1 integer ;2 addresss*/
 };
 
 long array_count =  0;
+struct double_label{
+    std::string label;
+    int type;
+};
+std::map<std::string,std::map<double,struct double_label>> func_double_label;
+long double_label_counter = 0;
+long TotalElement;
+bool FirstBlock = true;
+long array_offset = 0;

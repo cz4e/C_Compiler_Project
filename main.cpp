@@ -17,9 +17,12 @@ int main(int argc,char *argv[]){
             std::cout << iter_.value_name << std::endl;
         }
     }*/
-    for(auto iter:value_offset){
-        std::cout << "name:" << iter.first << " offset:" << iter.second << std::endl; 
-    }
+   /* for(auto iter:func_double_label){
+        
+        for(auto iter_:iter.second){
+            std::cout << iter.first << " " << iter_.first << " " << iter_.second << std::flush;
+        }
+    }*/
 #elif defined(StartTokenAnalysis)
     TokenAnalyzer TokenAnalyzer;
     TokenAnalyzer.SetFileName(argv[1]);

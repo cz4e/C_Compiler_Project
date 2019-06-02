@@ -485,6 +485,7 @@ void WriteReadOnlyData(std::ofstream &assemble_file){
     for(auto read_only_data_vec:ReadOnlyData){
         for(auto read_only_data:read_only_data_vec.second){
             assemble_file << ".LC" << ValueNo << ":" << std::endl;
+            read_only_offset[read_only_data] = ".LC" + std::to_string(ValueNo); 
             assemble_file << "\t.string \t" << read_only_data << std::endl;
             ValueNo++;
         }
