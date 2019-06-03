@@ -365,3 +365,7 @@ long double_label_counter = 0;
 long TotalElement;
 bool FirstBlock = true;
 long array_offset = 0;
+
+bool InIdList = false;
+
+bool GlobalScope = true;

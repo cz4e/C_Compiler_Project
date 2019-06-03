@@ -1,28 +1,29 @@
 	.file	"testfile.cpp"
 	.text
+	.globl	c
+	.data
+	.align	8
+	.type	c,@object
+	.size	c,8
+c:
+	.double	11.3
+	.text
 	.globl	main
 	.type	main,@function
 main:
 	pushq   %rbp
 	movq    %rsp,%rbp
-	subq    $32,%rsp
+	subq    $48,%rsp
 	movq    %fs:40,%rax
 	movq    %rax,-8(%rbp)
 	xorl    %eax,%eax
-	leaq	-32(%rbp),%rdx
-	movl	$1,%ecx
-	xorl	%eax,%eax
-	movq	%rdx,%rdi
-	rep stosq
-	movb	$97,32(%rbp)
-	movb	$98,31(%rbp)
-	movb	$99,30(%rbp)
-	movb	$101,29(%rbp)
-	movb	$102,28(%rbp)
-	movb	$103,27(%rbp)
-	movb	$49,26(%rbp)
-	movb	$50,25(%rbp)
-	movb	$51,24(%rbp)
+	movq	$11,-48(%rbp)
+	movq	$12,-40(%rbp)
+	movsd	floatnumber_0(%rip),%xmm0
+	movsd	%xmm0,-32(%rbp)
+	movq	$100,-24(%rbp)
+	movsd	c(%rip),%xmm0
+	movsd	%xmm0,-32(%rbp)
 	movq    -8(%rbp),%rdx
 	xorq    %fs:40,%rdx
 	je      endofproc_main
@@ -32,5 +33,7 @@ endofproc_main:
 	ret
 	.size	main,.-main
 	.section	.rodata
+floatnumber_0:
+	.double	11.1
 	.ident		"GNU C Like Simple C Compiler"
 	.section	.note.GNU-stack,"",@progbits

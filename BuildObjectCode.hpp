@@ -30,7 +30,7 @@
                                                                     valueinfo_object.value.number.realNumber.floatNumber.DoubleNumber = source_value.number.realNumber.floatNumber.DoubleNumber;\
                                                                 }\
                                                                 else if(dest_value_type & float_mask){\
-                                                                    valueinfo_object.value.number.realNumber.floatNumber.FloatNumber = source_value.number.realNumber.floatNumber.FloatNumber;\
+                                                                    valueinfo_object.value.number.realNumber.floatNumber.DoubleNumber = source_value.number.realNumber.floatNumber.DoubleNumber;\
                                                                 }\
                                                                 else if(isChar(dest_value_type)){\
                                                                     valueinfo_object.value.StringValue = source_value.StringValue;\
@@ -228,6 +228,7 @@ void WriteGlobalValue(std::ofstream &file_handler){
                         file_handler << "\t.data" << std::endl;
                         times++;
                     }
+                    
                     isGlobalValue(char,"byte")
                 }
                 else{
@@ -388,6 +389,7 @@ void WriteGlobalValue(std::ofstream &file_handler){
                 if(global.isSetValue){
                         int Count = 0;
                         file_handler << "\t.globl\t" << global.value_name << std::endl;
+                         
                         if(times == 0){
                             file_handler << "\t.data" << std::endl;
                             times++;
@@ -514,6 +516,7 @@ void WriteHeadInfo(std::ofstream &assemble_file,const std::string filename){
         WriteReadOnlyData(assemble_file);
         RunTimeTrans = true;
         GlobalScopeValue = false;
+        BuildCode = true;
     }
 }
 
