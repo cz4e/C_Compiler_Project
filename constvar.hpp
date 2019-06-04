@@ -369,3 +369,5 @@ long array_offset = 0;
 bool InIdList = false;
 
 bool GlobalScope = true;
+
+long RunTimeLine = 0;

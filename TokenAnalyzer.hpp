@@ -497,6 +497,8 @@ int TokenAnalyzer::Processor(void){
 #if defined(syntaxanalyzer)
                             std::cout <<  "No."<< LineNumber  << std::endl;
 #endif
+                            if(RunTimeTrans)
+                                RunTimeLine++;
                             LineNumber++;
                         }
                         CurrentChar = ReadAChar();
@@ -599,6 +601,8 @@ int TokenAnalyzer::Processor(void){
                             char tempchar;
                             while (!isEOF() && ((tempchar = ReadAChar())!='/' ||  CurrentChar != '*')){
 						        if(CurrentChar == '\n'){
+                                    if(RunTimeTrans)
+                                        RunTimeLine++;
                                     LineNumber++;
                                 }
                                 CurrentChar = tempchar;
