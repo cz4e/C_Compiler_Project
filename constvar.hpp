@@ -159,6 +159,8 @@
 #define float_mask      0x2000
 #define array_mask      0x4000
 #define static_mask     0x8000
+#define const_mask      0x10000
+#define volatile_mask   0x20000
 
 #define STATIC          1
 #define AUTO            2
@@ -258,6 +260,7 @@ struct ValueInfo{
     10 enum, -1 selfdefined*/
     long limit_type; /* 0 NONE,1 const,2 volaltile*/
     long store_type; /* 0 NONE,1 static,2 auto,3 register,4 extern,5 typedef*/
+    long sub_statement_type;
     std::string struct_name;
     std::string value_name;
     std::vector<struct TokenValue> block_value;
@@ -271,6 +274,7 @@ struct ValueAliasName{
     long store_type;
     long limit_type; /* 0 NONE, 1 const,2 volatile */
     long value_type;
+    long sub_statement_type;
     struct ArrayInfo arrayinfo;
     std::string struct_name;
     std::string alias;
@@ -347,6 +351,7 @@ bool BuildCode = false;
 
 struct Value{
     int value_type;
+    long sub_statement_type;
     std::string value_name;
     long value_integer;
     double value_float;
@@ -371,3 +376,7 @@ bool InIdList = false;
 bool GlobalScope = true;
 
 long RunTimeLine = 0;
+
+long sub_statement_type = 0;
+
+bool initial_list = false;

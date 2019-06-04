@@ -189,10 +189,10 @@ void WriteGlobalValue(std::ofstream &file_handler){
     int times = 0;
     for(auto global:GlobalValue){
         if(     global.value_type & char_mask){
-            if(global.value_type & pointer_mask){
+            if(global.sub_statement_type & pointer_mask){
                 ProcessPointer(CharTypePointer,char,"byte")
             }
-            else if(global.value_type & array_mask){
+            else if(global.sub_statement_type & array_mask){
                 int ElementCount = 1;
                 for(auto dims:global.value.arrayinfo.dims){
                     ElementCount *= dims;
@@ -241,7 +241,7 @@ void WriteGlobalValue(std::ofstream &file_handler){
             if(global.value_type & pointer_mask){
                 ProcessPointer(ShortTypePointer,short,"value")
             }
-            else if(global.value_type & array_mask){
+            else if(global.sub_statement_type & array_mask){
                 int ElementCount = 1;
                 for(auto dims:global.value.arrayinfo.dims){
                     ElementCount *= dims;
@@ -289,7 +289,7 @@ void WriteGlobalValue(std::ofstream &file_handler){
             if(global.value_type & pointer_mask){
                 ProcessPointer(IntTypePointer,int,"long")
             }
-            else if(global.value_type & array_mask){
+            else if(global.sub_statement_type & array_mask){
                 int ElementCount = 1;
                 for(auto dims:global.value.arrayinfo.dims){
                     ElementCount *= dims;
@@ -337,7 +337,7 @@ void WriteGlobalValue(std::ofstream &file_handler){
             if(global.value_type & pointer_mask){
                 ProcessPointer(LongTypePointer,long,"quad")
             }
-            else if(global.value_type & array_mask){
+            else if(global.sub_statement_type & array_mask){
                 int ElementCount = 1;
                 for(auto dims:global.value.arrayinfo.dims){
                     ElementCount *= dims;
@@ -381,7 +381,7 @@ void WriteGlobalValue(std::ofstream &file_handler){
             if(global.value_type & pointer_mask){
                 ProcessPointer(FloatTypePointer,float,"float")
             }
-            else if(global.value_type & array_mask){
+            else if(global.sub_statement_type & array_mask){
                 int ElementCount = 1;
                 for(auto dims:global.value.arrayinfo.dims){
                     ElementCount *= dims;
@@ -426,7 +426,7 @@ void WriteGlobalValue(std::ofstream &file_handler){
             if(global.value_type & pointer_mask){
                 ProcessPointer(DoubleTypePointer,double,"double")
             }
-            else if(global.value_type & array_mask){
+            else if(global.sub_statement_type & array_mask){
                 int ElementCount = 1;
                 for(auto dims:global.value.arrayinfo.dims){
                     ElementCount *= dims;
