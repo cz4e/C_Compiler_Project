@@ -154,7 +154,7 @@
 #define struct_mask     0x100
 #define union_mask      0x200
 #define enum_mask       0x400
-#define seldefine_mask  0x800
+#define selfdefine_mask  0x800
 #define pointer_mask    0x1000
 #define float_mask      0x2000
 #define array_mask      0x4000
@@ -258,6 +258,7 @@ struct ValueInfo{
     bool isSetValue;
     long value_type;  /* 1 integer,2 float point number,3 charactor, 4 string,5 short, 6 signed,7 unsigned, 8 struct,9 struct ,
     10 enum, -1 selfdefined*/
+    std::string type_name;
     long limit_type; /* 0 NONE,1 const,2 volaltile*/
     long store_type; /* 0 NONE,1 static,2 auto,3 register,4 extern,5 typedef*/
     long sub_statement_type;
@@ -300,7 +301,7 @@ struct ValueAliasName aliasname;
 std::vector<struct TokenValue> structlabellist;
 
 long store_type = 0,limit_type = 0,statement_type;
-std::string id_name = "",function_name = "",struct_name="",address_value;
+std::string id_name = "",function_name = "",struct_name="",address_value,type_name = "";
 std::vector<struct TokenValue> struct_info;
 std::vector<struct TokenValue> struct_body;
 struct TokenValue id_primary;

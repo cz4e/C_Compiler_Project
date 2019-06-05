@@ -30,7 +30,8 @@
                                                         if(CurrentTokenType == SYN_KEYWORD){\
                                                             struct_name = getTokenString();\
                                                             Match(SYN_KEYWORD);\
-                                                            BuildSymbolTable();\
+                                                            if(!RunTimeTrans)\
+                                                                BuildSymbolTable();\
                                                             ResetAlias();\
                                                         }\
                                                         Match(SYN_SEMIC);\
@@ -71,9 +72,21 @@
                                             if(iter_begin.sub_statement_type & pointer_mask){\
                                                 if(iter_begin.sub_statement_type & array_mask){\
                                                     long Count = 1;\
-                                                    for(auto dims_ : iter_begin.value.arrayinfo.dims){\
+                                                    if(statement_type & selfdefine_mask){\
+                                                        std::cout << iter_begin.type_name << std::endl;\
+                                                        auto aliasname_iter = ValueAlais.cbegin();\
+                                                        while(aliasname_iter != ValueAlais.cend()){\
+                                                            if(aliasname_iter->alias == iter_begin.type_name)\
+                                                                break;\
+                                                            aliasname_iter++;\
+                                                        }\
+                                                        for(auto dims_:aliasname_iter->arrayinfo.dims)\
                                                             Count *= dims_;\
                                                     }\
+                                                    else\
+                                                        for(auto dims_ : iter_begin.value.arrayinfo.dims){\
+                                                                Count *= dims_;\
+                                                        }\
                                                     if(!isoffset){\
                                                         TotalBytes += sizeof(_type *) * Count;\
                                                     }\
@@ -91,9 +104,20 @@
                                             }\
                                             else if(iter_begin.sub_statement_type & array_mask){\
                                                 long Count = 1;\
-                                                for(auto dims_ : iter_begin.value.arrayinfo.dims){\
+                                                if(statement_type & selfdefine_mask){\
+                                                    auto aliasname_iter = ValueAlais.cbegin();\
+                                                    while(aliasname_iter != ValueAlais.cend()){\
+                                                        if(aliasname_iter->alias == iter_begin.type_name)\
+                                                            break;\
+                                                        aliasname_iter++;\
+                                                    }\
+                                                    for(auto dims_:aliasname_iter->arrayinfo.dims)\
                                                         Count *= dims_;\
                                                 }\
+                                                else\
+                                                    for(auto dims_ : iter_begin.value.arrayinfo.dims){\
+                                                        Count *= dims_;\
+                                                    }\
                                                 if(!isoffset){\
                                                     TotalBytes += sizeof(_type) * Count;\
                                                 }\
@@ -159,6 +183,7 @@ static void ResetGlobalvalue(void){
     store_type = 0;
     limit_type = 0;
     statement_type = 0;
+    type_name = "";
     sub_statement_type = 0;
     struct_name = "";
     id_name = "";
@@ -399,13 +424,9 @@ bool SyntaxAnalyzer::isType(int tokenvalue){
         case SYN_STRUCT:
         case SYN_UNION:
         case SYN_ENUM:
-//        case SYN_KEYWORD:
             return true;
         case SYN_KEYWORD:
             return isValueAlias(getTokenString());
-        //case SYN_MUL:
-            //Pointer();
-        //    return true;
         default:
             return false;
     }
@@ -460,8 +481,10 @@ void SyntaxAnalyzer::StructOrUnion(void){
         Match(SYN_SET);
         Primary(CurrentTokenType);
     }
-    BuildSymbolTable();
-    ResetAlias();
+    if(!RunTimeTrans){
+        BuildSymbolTable();
+        ResetAlias();
+    }
     return;
 }
 
@@ -485,7 +508,9 @@ void SyntaxAnalyzer::StatementID(void){
 #endif
         Match(SYN_SET);
         struct Value value_ = Primary(CurrentTokenType);
+        
         if(RunTimeTrans && FunctionRegion ){
+            std::cout << "value: " << statement_type << std::endl;
             long offset = value_offset[id_name];
             if(value_.value_type == SYN_KEYWORD){
                 std::string register_ = WhichRegisterFree();
@@ -605,8 +630,8 @@ void SyntaxAnalyzer::StatementID(void){
             }
         }
         if(!RunTimeTrans){
+            InIdList = true;
             BuildSymbolTable();
-            InIdList = false;
         }
         IdList();
         Match(SYN_SEMIC);
@@ -643,7 +668,7 @@ void SyntaxAnalyzer::StatementID(void){
         }
         if(!RunTimeLine){
             BuildSymbolTable();
-            InIdList = false;
+            InIdList = true;
         }        
         FirstBlock = true;
         IdList();
@@ -654,7 +679,7 @@ void SyntaxAnalyzer::StatementID(void){
     else{
         if(!RunTimeLine){
             BuildSymbolTable();
-            InIdList = false;
+            InIdList = true;
         }        
         IdList();
         Match(SYN_SEMIC);
@@ -719,9 +744,7 @@ void SyntaxAnalyzer::StatementFunction(void){
             assemble_file << "\tcall    __stack_chk_fail@PLT" << std::endl;
             assemble_file << "endofproc_" << func_info.function_name << ": " << std::endl;
             assemble_file << "\tleave" << std::endl;
-           /* else{
-                assemble_file << "\tpopq    %rbp" << std::endl;
-            }*/
+
             assemble_file << "\tret" << std::endl;
             assemble_file << "\t.size\t" << func_info.function_name << ",.-" << func_info.function_name << std::endl;
             assemble_file << "\t.section\t.rodata" << std::endl;
@@ -1044,6 +1067,7 @@ void SyntaxAnalyzer::Type(void){
 
     if(KeyWordMap.count(getTokenString())){
         int code = getTokenCoding();
+        type_name = getTokenString();
         switch (code)
         {   
             case SYN_SHORT:
@@ -1130,27 +1154,22 @@ void SyntaxAnalyzer::Type(void){
                 statement_type &= ~float_mask;
                 statement_type &= ~double_mask;
                 break;
-           /* case SYN_MUL:
-                statement_type |= pointer_mask;
-                statement_type &= ~char_mask;
-                statement_type &= ~short_mask;
-                statement_type &= ~int_mask;
-                statement_type &= ~long_mask;
-                statement_type &= ~float_mask;
-                statement_type &= ~double_mask;
-                //Pointer();
-                break;*/
         }
         Match(code);
     }
     else if(CurrentTokenType == SYN_MUL){
+        type_name = getTokenString();
         Pointer();
     }
     else if(CurrentTokenType == SYN_KEYWORD){
         if(!(statement_type & (struct_mask | union_mask)) && !StructDefineList){
-            alias_name = getTokenString();
-            if(getAlias(alias_name) != ValueAlais.cend()){
-                statement_type |= seldefine_mask;
+            type_name = getTokenString();
+            alias_name = type_name;
+            auto aliasname_iter = getAlias(alias_name);
+            if(aliasname_iter != ValueAlais.cend()){
+                sub_statement_type = aliasname_iter->sub_statement_type;
+                statement_type = aliasname_iter->value_type;
+                statement_type |= selfdefine_mask;
                 Match(SYN_KEYWORD);
             }
         }
@@ -1240,7 +1259,7 @@ struct Value SyntaxAnalyzer::Primary(int tokenvalue){
 #if defined(syntaxanalyzer)
     std::cout << "Primary-> long_num " << token.tokenValue.StringValue << " " << token.TokenType << std::endl;
 #endif
-           // statement_type |= long_mask;
+
             id_primary.number.realNumber.intgerNumber.LongNumber = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
             if(RunTimeTrans){
                 value_.value_integer = token.tokenValue.number.realNumber.intgerNumber.LongNumber;
@@ -1591,8 +1610,10 @@ void SyntaxAnalyzer::PList(void){
         Match(SYN_COMMA);
         if(CurrentTokenType == SYN_BRACE_R){
             if(!StructDefineList){
-                BuildSymbolTable();
-                ResetAlias();
+                if(!RunTimeTrans){
+                    BuildSymbolTable();
+                    ResetAlias();
+                }
             }
             return;
         }
@@ -1603,8 +1624,10 @@ void SyntaxAnalyzer::PList(void){
 #if defined(syntaxanalyzer)
     std::cout << "PList->" << std::endl;
 #endif  
-        BuildSymbolTable();
-        ResetAlias();
+        if(!RunTimeTrans){
+            BuildSymbolTable();
+            ResetAlias();
+        }
     }
     return;
 }
@@ -1613,12 +1636,13 @@ void SyntaxAnalyzer::PList(void){
 void SyntaxAnalyzer::BuildSymbolTable(void){
     if(!BuildCode){
         if((GlobalScopeValue || FunctionRegion || InAnonymousDomain) && store_type != TYPEDEF){
-            if(statement_type & seldefine_mask){
+            if(statement_type & selfdefine_mask){
                 auto alias = getAlias(alias_name);
                 if(alias != ValueAlais.cend()){
                     valueinfo.store_type = alias->store_type;
                     valueinfo.limit_type = alias->limit_type;
                     valueinfo.value_type = alias->value_type;
+                    valueinfo.sub_statement_type = alias->sub_statement_type;
                     valueinfo.value.arrayinfo = alias->arrayinfo;
                     valueinfo.struct_name = alias->struct_name;
                     CopyValue(alias->value_type,id_primary,valueinfo)
@@ -1648,6 +1672,7 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
                 valueinfo.struct_name = struct_name;
             }  
             valueinfo.value_name = id_name;
+            valueinfo.type_name = type_name;
             valueinfo.value.value_address = address_value;
 
             if(GlobalScopeValue)
@@ -1678,25 +1703,21 @@ void SyntaxAnalyzer::BuildSymbolTable(void){
         else if(GlobalScopeValue && store_type == TYPEDEF){
             aliasname.limit_type = limit_type;
             aliasname.value_type = statement_type;
+            //aliasname.type_name = type_name;
+            aliasname.sub_statement_type = sub_statement_type;
             aliasname.alias = id_name;
-            aliasname.arrayinfo = id_primary.arrayinfo;
+            aliasname.arrayinfo.Dimension = id_primary.arrayinfo.Dimension;
+            aliasname.arrayinfo.dims.assign(id_primary.arrayinfo.dims.cbegin(),id_primary.arrayinfo.dims.cend());   
             aliasname.struct_name = struct_name;
             ValueAlais.push_back(aliasname);
         }
     }
-    
+
     return ;
 }
 
 void SyntaxAnalyzer::IdList(void){
         
-    /*    if(StructDefineList){
-            struct_body.push_back(id_primary);
-        }
-        else{          
-            BuildSymbolTable();   
-        }*/
-
     if(!RunTimeTrans)
         if(!InIdList){
             BuildSymbolTable();
@@ -1705,7 +1726,7 @@ void SyntaxAnalyzer::IdList(void){
 #if defined(syntaxanalyzer)
     std::cout << "IdList-> ,(*)* id[=Primary] IdList" << std::endl;
 #endif
-        InIdList = true;
+        InIdList = false;
         Match(SYN_COMMA);  
         if(CurrentTokenType == SYN_MUL){
             Pointer();
@@ -1849,17 +1870,17 @@ void SyntaxAnalyzer::IdList(void){
                 }
             }
         }
-        if(!RunTimeLine){
+     /*   if(!RunTimeLine){
             BuildSymbolTable();
-        }
+        }*/
         IdList();
     }
     else{
 #if defined(syntaxanalyzer)
     std::cout << "IdList->" << std::endl;
 #endif
-        InIdList = false;
-        if(!InIdList){
+        InIdList = true;
+        if(InIdList){
             ResetAlias();
         }
     }
@@ -2018,8 +2039,10 @@ void SyntaxAnalyzer::Brace(void){
     std::cout << "Brace-> " << std::endl;
 #endif        
         if(CurrentTokenType != SYN_SET){
-            BuildSymbolTable();
-            ResetAlias();
+            if(!RunTimeTrans){
+                BuildSymbolTable();
+                ResetAlias();
+            }
         }
     }
     return;
@@ -2114,12 +2137,7 @@ void SyntaxAnalyzer::UnionList(void){
 #if defined(syntaxanalyzer)
     std::cout << "id[=Primary] Union" << std::endl;
 #endif
- /*   Match(SYN_KEYWORD);
-    if(CurrentTokenType == SYN_SET){
-        Match(SYN_SET);
-        Primary(CurrentTokenType);
-    }
-    Union();*/
+
     StructDefineList = true;
     int type_copy = statement_type;
     while(CurrentTokenType != SYN_BRACE_R ){
@@ -2199,7 +2217,6 @@ static bool isUnaryExpress(int tokentype){
         case SYN_NUMBER_DOUBLE:
         case SYN_NUMBER_LONG:
         case SYN_PAREN_L:
-        //case SYN_FUNCTION:
             return true;
         default:
             return false;       
@@ -2800,10 +2817,6 @@ struct Value SyntaxAnalyzer::ForceTranExpress(void){
         struct Value value_ = ForceTranExpress();
         return value_;
     }
- /*   else if(isType(CurrentTokenType)){
-        Type();
-        ForceTranExpress();
-    }*/
     else{
 #if defined(syntaxanalyzer)
     std::cout << "ForceTranExpress-> UnaryExpress" << std::endl;
@@ -2951,16 +2964,6 @@ struct Value SyntaxAnalyzer::UnaryExpress(void){
 #endif
         if(CurrentTokenType == SYN_MUL)
             Match(SYN_MUL);
-      /*  else if(CurrentTokenType == SYN_FUNCTION){
-            Match(SYN_FUNCTION);
-#if defined(syntaxanalyzer)
-    std::cout << "UnaryExpress-> function(Args  RealArgument)" << std::endl;
-#endif
-            Match(SYN_PAREN_L);
-            Args();
-            RealArgument();
-            Match(SYN_PAREN_R);
-        }*/
         else
             Match(getTokenCoding());
         return ForceTranExpress();

@@ -1,16 +1,6 @@
-
+typedef char *str[10];
 int main(void){
-/*	long a = 11;
-	long b = 12;
-	double d  = 11.1;
-	long e = 100;
-	d = c;
-    float flxg[10] = {1.1,2.2,3.3};
-    long jj = 11;
-    double _flxg[12] = {3.4,4.5};*/
-    char *str[10] = {"Hello","USTC"};
-    long *vec[10] = {10,10};
-    char *str_ = "MAX2",*str2 = "MAX",*st3 = "MMA";
+    str a,b,c;
    // str_ = str2;
 /*	float b;
 	float d;
