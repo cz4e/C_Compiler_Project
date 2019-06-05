@@ -23,9 +23,9 @@ int main(int argc,char *argv[]){
             std::cout << iter.first << " " << iter_.first << " " << iter_.second << std::flush;
         }
     }*/
-    for(auto iter:localvalue["main"].value_info){
+   /* for(auto iter:localvalue["main"].value_info){
         std::cout << iter.value_name << std::endl;
-    }
+    }*/
 #elif defined(StartTokenAnalysis)
     TokenAnalyzer TokenAnalyzer;
     TokenAnalyzer.SetFileName(argv[1]);

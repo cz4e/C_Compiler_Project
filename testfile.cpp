@@ -1,6 +1,7 @@
 typedef char *str[10];
 int main(void){
-    str a,b,c;
+    char a = 'a',b = 'b';
+    a *= 100;
    // str_ = str2;
 /*	float b;
 	float d;

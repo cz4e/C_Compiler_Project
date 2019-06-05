@@ -6,10 +6,17 @@
 main:
 	pushq   %rbp
 	movq    %rsp,%rbp
-	subq    $256,%rsp
+	subq    $32,%rsp
 	movq    %fs:40,%rax
 	movq    %rax,-8(%rbp)
 	xorl    %eax,%eax
+	movb	$97,-32(%rbp)
+	movb	$98,-31(%rbp)
+	movzbl	-32(%rbp),%edx
+	movl	%edx,%eax
+	sall	$2,%eax
+	imull	$25,%eax
+	movb	%al,-32(%rbp)
 	movq    -8(%rbp),%rdx
 	xorq    %fs:40,%rdx
 	je      endofproc_main

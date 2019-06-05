@@ -530,8 +530,114 @@ int TokenAnalyzer::Processor(void){
                             AppendCharToString(CurrentChar)
                             return SYN_INC;
                         default:
-                            SeekFileHandler(-1L);
-                            return SYN_ADD;
+                            if(IsDights(CurrentChar)){
+                                AppendCharToString(CurrentChar)
+                                char TempChar ;
+                                int Count = 0;
+                                switch(CurrentChar){
+                                    case '0':
+                                        CurrentChar = ReadAChar();
+                                        if(CurrentChar == 'x' || CurrentChar == 'X'){
+                                            AppendCharToString(CurrentChar)
+                                            CurrentChar = ReadAChar();
+                                            Count++;
+                                            do{
+                                                if(!HexDights(CurrentChar))
+                                                    break;
+                                                else{
+                                                    CurrentChar = ReadAChar();
+                                                    Count++;
+                                                }
+                                            }while(1);
+                                            Count = 0 - Count;
+                                            SeekFileHandler(Count);
+                                            if(CurrentChar == '.' || CurrentChar == 'P' || CurrentChar == 'p'){
+                                                return IsHexFloat();
+                                            }
+                                            else if(CurrentChar == 'u' || CurrentChar == 'U' || CurrentChar == 'l' ||
+                                                        CurrentChar == 'L' ){
+                                                            return IsHeximal();
+                                            }
+                                            else
+                                            {
+                                                return IsHeximal();
+                                            }
+                                            
+                                        }
+                                        else if(ZeroToSeven(CurrentChar)){
+                                            AppendCharToString(CurrentChar)
+                                            switch(CurrentChar){
+                                                case '.':
+                                                    AppendCharToString(CurrentChar)
+                                                    return IsDecFloat();
+                                                case '0':
+                                                case '1':
+                                                case '2':
+                                                case '3':
+                                                case '4':
+                                                case '5':
+                                                case '6':
+                                                case '7':
+                                                    do{
+                                                        if(!IsDights(CurrentChar))
+                                                            break;
+                                                        else
+                                                        {
+                                                            CurrentChar = ReadAChar();
+                                                            Count++;
+                                                        }
+                                                    }while(1);
+                                                    Count = 0 - Count;
+                                                    SeekFileHandler(Count);
+                                                    if(CurrentChar == '.'){
+                                                        return IsDecFloat();
+                                                    }
+                                                    else if(CurrentChar == 'u' || CurrentChar == 'U' ||
+                                                                CurrentChar == 'l'  || CurrentChar == 'L'){
+
+                                                            return IsOtcimal();
+                                                    }
+                                                    else
+                                                    {
+                                                        break;
+                                                    }
+                                                    
+                                                case '8':
+                                                case '9':
+                                                case 'u':
+                                                case 'U':
+                                                case 'l':
+                                                case 'L':
+                                                    return IsOtcimal();
+                                            }
+                                        }
+                                        if(IsDights(CurrentChar)){
+                                            AppendCharToString(CurrentChar)
+                                            return IsDecFloat();
+                                        }
+                                        if(CurrentChar == '.'){
+                                            AppendCharToString(CurrentChar)
+                                            return IsDecFloat();
+                                        }
+                                        SeekFileHandler(-1);
+                                        return SYN_NUMBER;
+                                    case '1':
+                                    case '2':
+                                    case '3':
+                                    case '4':
+                                    case '5':
+                                    case '6':
+                                    case '7':
+                                    case '8':
+                                    case '9':
+                                        return IsADecimal();
+                                    default:break;
+                                }
+                            }
+                            else{
+                                SeekFileHandler(-1L);
+                                return SYN_ADD;
+                            }
                     }
                 }
                 case '-':{
@@ -556,8 +662,114 @@ int TokenAnalyzer::Processor(void){
                                     return SYN_POINTER;
                             }
                         default:
-                            SeekFileHandler(-1L);
-                            return SYN_SUB;
+                            if(IsDights(CurrentChar)){
+                                AppendCharToString(CurrentChar)
+                                char TempChar ;
+                                int Count = 0;
+                                switch(CurrentChar){
+                                    case '0':
+                                        CurrentChar = ReadAChar();
+                                        if(CurrentChar == 'x' || CurrentChar == 'X'){
+                                            AppendCharToString(CurrentChar)
+                                            CurrentChar = ReadAChar();
+                                            Count++;
+                                            do{
+                                                if(!HexDights(CurrentChar))
+                                                    break;
+                                                else{
+                                                    CurrentChar = ReadAChar();
+                                                    Count++;
+                                                }
+                                            }while(1);
+                                            Count = 0 - Count;
+                                            SeekFileHandler(Count);
+                                            if(CurrentChar == '.' || CurrentChar == 'P' || CurrentChar == 'p'){
+                                                return IsHexFloat();
+                                            }
+                                            else if(CurrentChar == 'u' || CurrentChar == 'U' || CurrentChar == 'l' ||
+                                                        CurrentChar == 'L' ){
+                                                            return IsHeximal();
+                                            }
+                                            else
+                                            {
+                                                return IsHeximal();
+                                            }
+                                            
+                                        }
+                                        else if(ZeroToSeven(CurrentChar)){
+                                            AppendCharToString(CurrentChar)
+                                            switch(CurrentChar){
+                                                case '.':
+                                                    AppendCharToString(CurrentChar)
+                                                    return IsDecFloat();
+                                                case '0':
+                                                case '1':
+                                                case '2':
+                                                case '3':
+                                                case '4':
+                                                case '5':
+                                                case '6':
+                                                case '7':
+                                                    do{
+                                                        if(!IsDights(CurrentChar))
+                                                            break;
+                                                        else
+                                                        {
+                                                            CurrentChar = ReadAChar();
+                                                            Count++;
+                                                        }
+                                                    }while(1);
+                                                    Count = 0 - Count;
+                                                    SeekFileHandler(Count);
+                                                    if(CurrentChar == '.'){
+                                                        return IsDecFloat();
+                                                    }
+                                                    else if(CurrentChar == 'u' || CurrentChar == 'U' ||
+                                                                CurrentChar == 'l'  || CurrentChar == 'L'){
+
+                                                            return IsOtcimal();
+                                                    }
+                                                    else
+                                                    {
+                                                        break;
+                                                    }
+                                                    
+                                                case '8':
+                                                case '9':
+                                                case 'u':
+                                                case 'U':
+                                                case 'l':
+                                                case 'L':
+                                                    return IsOtcimal();
+                                            }
+                                        }
+                                        if(IsDights(CurrentChar)){
+                                            AppendCharToString(CurrentChar)
+                                            return IsDecFloat();
+                                        }
+                                        if(CurrentChar == '.'){
+                                            AppendCharToString(CurrentChar)
+                                            return IsDecFloat();
+                                        }
+                                        SeekFileHandler(-1);
+                                        return SYN_NUMBER;
+                                    case '1':
+                                    case '2':
+                                    case '3':
+                                    case '4':
+                                    case '5':
+                                    case '6':
+                                    case '7':
+                                    case '8':
+                                    case '9':
+                                        return IsADecimal();
+                                    default:break;
+                                }
+                            }
+                            else{
+                                SeekFileHandler(-1L);
+                                return SYN_SUB;
+                            }
                     }
                 }
                 case '*':{
