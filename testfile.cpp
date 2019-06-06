@@ -1,7 +1,8 @@
 typedef char *str[10];
 int main(void){
-    char a = 'a',b = 'b';
-    a *= 100;
+    short a = 10;
+    a *= 10.5;
+    float bv = 12.3;
    // str_ = str2;
 /*	float b;
 	float d;

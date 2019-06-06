@@ -2655,7 +2655,165 @@ struct Value  SyntaxAnalyzer::AssignmentExpress(void){
                                 }                     
                             }
                         }
-                        else if(LeftValue.value_type & short_mask){;}
+                        else if(LeftValue.value_type & short_mask){
+                            std::string offset_str;
+                            getOffset(offset_str,LeftValue.value_name);
+                            if(RightValue.value_type & char_mask){
+                                if(RightValue.value_name == ""){
+                                    assemble_file << "\tmovzwl\t" << offset_str << ",\%edx" << std::endl;
+                                }
+                                else if(RightValue.value_type & unsigned_mask){
+                                    assemble_file << "\tmovzbl\t" << offset_str << ",\%edx" << std::endl;
+                                }
+                                else{
+                                    assemble_file << "\tmovsbw\t" << offset_str << ",\%dx" << std::endl;
+                                }
+                                if(RightValue.value_name == ""){
+                                    if(InRegister){
+                                        assemble_file << "\timull\t" << "\%edx,\%eax" << std::endl;
+                                    }
+                                    else{
+                                        long ascii_code_long = ASCIITable[RightValue.const_char];
+                                        long sall_long = 0,mul_long;
+                                        getMoveBit(ascii_code_long,sall_long,mul_long);
+                                        if(ascii_code_long == 1);
+                                        else if(sall_long > 0){
+                                            assemble_file << "\tsall\t$" << sall_long << ",\%edx" << std::endl;
+                                            assemble_file << "\timull\t$" << mul_long << ",\%edx" << std::endl;
+                                        }
+                                        else{
+                                            assemble_file << "\timull\t$" << mul_long << ",\%edx" << std::endl;
+                                        }
+                                    }
+                                    assemble_file << "\tmovw\t" << "\%ax," << offset_str << std::endl; 
+                                    InRegister = true;
+                                }
+                                else{
+                                    if(InRegister){
+                                        assemble_file << "\timull\t" << "\%edx,\%eax" << std::endl;
+                                    }
+                                    else{
+                                        std::string src_register_str;
+                                        getOffset(src_register_str,RightValue.value_name);
+                                        assemble_file << "\tmovzwl\t" << src_register_str << ",\%eax" << std::endl;
+                                        assemble_file << "\timull\t" << "\%edx.\%eax" << std::endl;
+                                    }
+                                    assemble_file << "\tmovw\t" << "\%ax," << offset_str << std::endl; 
+                                    InRegister = true;
+                                }
+                            }
+                            else if(RightValue.value_type & short_mask){
+                                assemble_file << "\tmovzwl\t" << offset_str << ",\%edx" << std::endl;
+                                if(InRegister){
+                                    assemble_file << "\timull\t\%edx.\%eax" << std::endl;
+                                }
+                                else{
+                                    std::string dest_register_string;
+                                    getOffset(dest_register_string,RightValue.value_name);
+                                    assemble_file << "\timulw\t" << dest_register_string << ",\%ax" << std::endl;
+                                }
+                                assemble_file << "\tmovw\t\%ax," << offset_str << std::endl;
+                                InRegister = true; 
+                            }
+                            else if(RightValue.value_type & int_mask){
+                                if(RightValue.value_type & unsigned_mask){
+                                    assemble_file << "\tmovswl\t" << offset_str << ",\%edx" << std::endl;
+                                }
+                                else {
+                                    assemble_file << "\tmovzwl\t" << offset_str << ",\%edx" << std::endl;
+                                }
+                                if(InRegister){
+                                    assemble_file << "\timull\t\%edx,\%eax" << std::endl;
+                                }
+                                else {
+                                    std::string dest_register_sring ;
+                                    getOffset(dest_register_sring,RightValue.value_name);
+                                    assemble_file << "\timull\t" << dest_register_sring << ",\%eax" << std::endl;
+                                }
+                                assemble_file << "\tmovl\t\%eax," << offset_str << std::endl;
+                                InRegister = true;
+                            }
+                            else if(RightValue.value_type & long_mask){
+                                if(RightValue.value_name == ""){
+                                    assemble_file << "\tmovzwl\t" << offset_str << ",\%edx" << std::endl;
+                                    if(InRegister){
+                                        assemble_file << "\timull\t" << "\%edx," << "\%eax" << std::endl;
+                                    }
+                                    else{
+                                        assemble_file << "\timull\t" << "$" << RightValue.value_integer << ",\%eax" << std::endl;
+                                    }
+                                    assemble_file << "\tmovw\t\%ax," << offset_str << std::endl;
+                                }
+                                else{
+                                    std::string dest_offset_string;
+                                    getOffset(dest_offset_string,RightValue.value_name);
+                                    if(RightValue.value_type & unsigned_mask){
+                                        if(InRegister){
+                                            assemble_file << "\tmovswq\t" << offset_str << ",\%rdx" << std::endl;
+                                        }
+                                        else{
+                                            assemble_file << "\tmovswq\t" << offset_str << ",\%rax" << std::endl;
+                                            assemble_file << "\tmovl\t\%eax,\%edx" << std::endl;
+                                            assemble_file << "\tmovq\t" << dest_offset_string << "\%rax" << std::endl;
+                                        }
+                                        assemble_file << "\timull\t\%edx,\%eax" << std::endl;
+                                        assemble_file << "\tmovw\t\%ax," << offset_str << std::endl;
+                                    }
+                                    else{
+                                        if(InRegister){
+                                            assemble_file << "\tmovzwl\t" << offset_str << ",\%rdx" << std::endl;
+                                        }
+                                        else{
+                                            assemble_file << "\tmovzwl\t" << offset_str << ",\%rax" << std::endl;
+                                            assemble_file << "\tmovl\t\%eax,\%edx" << std::endl;
+                                            assemble_file << "\tmovq\t" << dest_offset_string << "\%rax" << std::endl;
+                                        }
+                                        assemble_file << "\timull\t\%edx,\%eax" << std::endl;
+                                        assemble_file << "\tmovw\t\%ax," << offset_str << std::endl;
+                                    }
+                                }
+                            }
+                            else if(RightValue.value_type & float_mask){
+                                
+                                if(InRegister){
+                                    assemble_file << "\tcvtsi2ss\t\%eax,\%xmm0" << std::endl;
+                                    assemble_file << "\tmulss\t" << offset_str << ",\%xmm0" << std::endl;
+                                }
+                                else{
+                                    std::string dest_offset_string;
+                                    getOffset(dest_offset_string,RightValue.value_name);
+                                    assemble_file << "\tmovswl\t" << offset_str << ",\%eax" << std::endl;
+                                    assemble_file << "\tcvtsi2ss\t\%eax,\%xmm0" << std::endl;
+                                    assemble_file << "\tmulss\t" << dest_offset_string << ",\%xmm0" << std::endl;
+                                }
+                                assemble_file << "\tcvtss2si\t" << "\%xmm0,\%eax" << std::endl;
+                                assemble_file << "\tmovw\t" << "\%ax," << offset_str << std::endl;
+                                InRegister = true;
+                            }
+                            else if(RightValue.value_type & double_mask){
+                                if(InRegister){
+                                    assemble_file << "\tcvtsi2sd\t\%eax,\%xmm0" << std::endl;
+                                    assemble_file << "\tmulss\t" << offset_str << ",\%xmm0" << std::endl;
+                                }
+                                else{
+                                    assemble_file << "\tmovswl\t" << offset_str << ",\%eax" << std::endl;
+                                    assemble_file << "\tcvtsi2sd\t\%eax,\%xmm0" << std::endl;
+                                    if(RightValue.value_name == ""){
+                                        std::string double_label = func_double_label[func_info.function_name][RightValue.value_float].label+ "(%rip)";
+                                        assemble_file << "\tmovsd\t" << double_label << ",\%xmm1" << std::endl;
+                                        assemble_file << "\tmulsd\t" << "\%xmm1" << ",\%xmm0" << std::endl;
+                                    }
+                                    else{
+                                        std::string dest_offset_string;
+                                        getOffset(dest_offset_string,RightValue.value_name);
+                                        assemble_file << "\tmulsd\t" << dest_offset_string << ",\%xmm0" << std::endl;
+                                    }
+                                }
+                                assemble_file << "\tcvttsd2si\t" << "\%xmm0,\%eax" << std::endl;
+                                assemble_file << "\tmovw\t" << "\%ax," << offset_str << std::endl;
+                                InRegister = true;
+                            }
+                        }
                         else if(LeftValue.value_type & int_mask){;}
                         else if(LeftValue.value_type & long_mask){;}
                         else if(LeftValue.value_type & float_mask){;}
@@ -3415,13 +3573,13 @@ struct Value SyntaxAnalyzer::PrimaryExpress(void){
             value_.value_name = "";
             value_.value_type = statement_type ;
             value_.value_type |= double_mask;
-            if(!RunTimeTrans)
+        }
+        if(!RunTimeTrans)
             if(FunctionRegion){
                 func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].label = "floatnumber_" + std::to_string(double_label_counter);
-                func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].type = statement_type ;
+                func_double_label[func_info.function_name][token.tokenValue.number.realNumber.floatNumber.DoubleNumber].type = double_mask ;
                 double_label_counter++;
             }
-        }
         Match(SYN_NUMBER_DOUBLE);
         return value_;
     }
