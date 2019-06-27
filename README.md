@@ -5,7 +5,7 @@
 
 ## Latest Events
 
-Paused Compiler development because of final examination
+stop Compiler development because of final examination
 
 ## A Simple Example:
 
